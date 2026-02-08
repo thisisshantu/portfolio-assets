@@ -1,39 +1,44 @@
+if (window.__portfolioAssetsInitialized) {
+  console.warn('portfolio-assets main.js already initialized; skipping duplicate execution.');
+} else {
+  window.__portfolioAssetsInitialized = true;
+
 if (typeof WOW !== 'undefined') {
   new WOW().init();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function initFadeInObserver() {
   const faders = document.querySelectorAll('.fade-in');
   const appearOptions = {
     threshold: 0,
     rootMargin: '0px 0px -100px 0px',
   };
-  const appearOnScroll = new IntersectionObserver((entries, appearOnScroll) => {
+
+  const appearOnScroll = new IntersectionObserver((entries, observer) => {
     entries.forEach((entry) => {
       if (!entry.isIntersecting) return;
       entry.target.classList.add('visible');
-      appearOnScroll.unobserve(entry.target);
+      observer.unobserve(entry.target);
     });
   }, appearOptions);
+
   faders.forEach((fader) => {
     appearOnScroll.observe(fader);
   });
+}
 
-  // Navigation hamburger toggle
+function initNavigation() {
   const hamburger = document.querySelector('.hamburger');
   const navLinks = document.querySelector('.nav-links');
   const links = document.querySelectorAll('.nav-links li');
+
   if (hamburger && navLinks) {
     hamburger.addEventListener('click', () => {
       navLinks.classList.toggle('nav-active');
-      links.forEach((link, index) => {
-
-      });
       hamburger.classList.toggle('toggle');
     });
   }
 
-  // Close navigation on link click
   links.forEach((link) => {
     link.addEventListener('click', () => {
       if (navLinks) navLinks.classList.remove('nav-active');
@@ -41,21 +46,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // --- Scrollspy for nav menu highlight ---
   const navLinksEls = document.querySelectorAll('.nav-links a.centered-link');
-  // Only select sections that exist and are visible
   const sections = navLinksEls
     ? Array.from(navLinksEls)
-        .map(link => document.querySelector(link.getAttribute('href')))
+        .map((link) => document.querySelector(link.getAttribute('href')))
         .filter(Boolean)
     : [];
 
   function highlightNav() {
-    let scrollPos = window.scrollY || window.pageYOffset;
-    let offset = 80; // adjust for fixed nav height if needed
+    const scrollPos = window.scrollY || window.pageYOffset;
+    const offset = 80;
     let foundIdx = -1;
 
-    // Find the last section above the scroll position
     for (let i = 0; i < sections.length; i++) {
       const section = sections[i];
       if (
@@ -67,15 +69,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Special case: If at the very bottom, highlight last section
     if (
-      window.innerHeight + scrollPos >= document.body.offsetHeight - 2
-      && sections.length > 0
+      window.innerHeight + scrollPos >= document.body.offsetHeight - 2 &&
+      sections.length > 0
     ) {
       foundIdx = sections.length - 1;
     }
 
-    navLinksEls.forEach(link => link.classList.remove('active-nav'));
+    navLinksEls.forEach((link) => link.classList.remove('active-nav'));
     if (foundIdx >= 0) {
       navLinksEls[foundIdx].classList.add('active-nav');
     }
@@ -83,43 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.addEventListener('scroll', highlightNav);
   highlightNav();
-
-  // Project card overlay
-  const projectCards = document.querySelectorAll('.project-card');
-  const overlay = document.getElementById('overlay');
-  const closeBtn = document.getElementById('close-btn');
-  const overlayImage = document.getElementById('overlay-image');
-  const overlayTitle = document.getElementById('overlay-title');
-  const overlayDescription = document.getElementById('overlay-description');
-  const overlayUrl = document.getElementById('overlay-url');
-  const overlayTechnology = document.getElementById('overlay-technology');
-  const overlayOrigin = document.getElementById('overlay-origin');
-  projectCards.forEach((card) => {
-    card.addEventListener('click', () => {
-      const raw = card.getAttribute('data-project');
-      if (!raw) return;
-      const project = JSON.parse(raw);
-      if (overlayImage) overlayImage.src = project.image;
-      if (overlayTitle) overlayTitle.textContent = project.name;
-      if (overlayDescription) overlayDescription.textContent = project.description;
-      if (overlayUrl) {
-        overlayUrl.href = project.url;
-        overlayUrl.textContent = project.url;
-      }
-      if (overlayTechnology) overlayTechnology.textContent = project.technology;
-      if (overlayOrigin) overlayOrigin.textContent = project.origin;
-      if (overlay) overlay.classList.add('active');
-    });
-  });
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      if (overlay) overlay.classList.remove('active');
-    });
-  }
-
-  // Contact form submission
-
-});
+}
 
 window.addEventListener('load', function () {
   window.scrollTo(0, 0);
@@ -154,13 +119,13 @@ window.addEventListener('load', function () {
 });
 
 // FAQ Section Updated with Code 2
-document.addEventListener('DOMContentLoaded', () => {
+function initFaqSection() {
   const faqItems = document.querySelectorAll('.faq-item');
   faqItems.forEach((item) => {
     const question = item.querySelector('.faq-question');
     if (!question) return;
+
     question.addEventListener('click', () => {
-      // Close all other faq-answer elements
       faqItems.forEach((otherItem) => {
         if (otherItem !== item) {
           const otherAnswer = otherItem.querySelector('.faq-answer');
@@ -170,24 +135,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      // Toggle the clicked faq-answer element
       const answer = item.querySelector('.faq-answer');
       const arrow = question.querySelector('.arrow');
       if (answer) answer.style.display = answer.style.display === 'block' ? 'none' : 'block';
       if (arrow) arrow.classList.toggle('rotate');
     });
   });
+}
 
+function initIframePlaceholders() {
   let isLoading = false;
+
   function loadIframe(element) {
     if (isLoading) {
       const loading = document.getElementById('loading-message');
       if (loading) loading.style.display = 'block';
       return;
     }
+
     isLoading = true;
     const loading = document.getElementById('loading-message');
     if (loading) loading.style.display = 'none';
+
     const iframe = document.createElement('iframe');
     iframe.src = element.getAttribute('data-src');
     iframe.style.width = '100%';
@@ -196,6 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
     iframe.onload = () => {
       isLoading = false;
     };
+
     element.parentNode.replaceChild(iframe, element);
   }
 
@@ -203,19 +173,21 @@ document.addEventListener('DOMContentLoaded', () => {
   placeholders.forEach((placeholder) => {
     placeholder.addEventListener('click', () => loadIframe(placeholder));
   });
+}
 
+function initThemeToggle() {
   const darkModeToggle = document.getElementById('dark-mode-toggle');
-  if (darkModeToggle) {
-    darkModeToggle.addEventListener('click', () => {
-      document.body.classList.toggle('dark-mode');
-      if (document.body.classList.contains('dark-mode')) {
-        document.body.setAttribute('data-theme', 'dark');
-      } else {
-        document.body.removeAttribute('data-theme');
-      }
-    });
-  }
-});
+  if (!darkModeToggle) return;
+
+  darkModeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    if (document.body.classList.contains('dark-mode')) {
+      document.body.setAttribute('data-theme', 'dark');
+    } else {
+      document.body.removeAttribute('data-theme');
+    }
+  });
+}
 
 const form = document.getElementById('contact-form');
 const submitBtn = document.getElementById('submit-btn');
@@ -266,12 +238,14 @@ if (form) form.addEventListener('submit', async (e) => {
   }
 });
 
-document.querySelectorAll('.scroll-text').forEach(el => {
-  const wrapper = el.parentElement;
-  if (wrapper && el.scrollWidth > wrapper.clientWidth) {
-    el.classList.add('scroll-enabled');
-  }
-});
+function initScrollTextOverflow() {
+  document.querySelectorAll('.scroll-text').forEach((el) => {
+    const wrapper = el.parentElement;
+    if (wrapper && el.scrollWidth > wrapper.clientWidth) {
+      el.classList.add('scroll-enabled');
+    }
+  });
+}
 
 // Example JS: Button hover effect
 const exploreBtn = document.getElementById('exploreBtn');
@@ -752,7 +726,6 @@ document.addEventListener('click', function (e) {
 /* ================================
    INIT
 ================================ */
-document.addEventListener('DOMContentLoaded', loadProjects);
 
 /* ================================
    GLOBAL STORES
@@ -893,7 +866,6 @@ document.addEventListener('click', e => {
 /* ================================
    INIT
 ================================ */
-document.addEventListener('DOMContentLoaded', loadDesignProjects);
 
 /* ================================
    Google Sheets Parser (required)
@@ -956,6 +928,12 @@ async function loadFooterImages() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  initFadeInObserver();
+  initNavigation();
+  initFaqSection();
+  initIframePlaceholders();
+  initThemeToggle();
+
   loadExperience();
   loadEducation();
   loadHeroSection();
@@ -964,5 +942,10 @@ document.addEventListener('DOMContentLoaded', () => {
   loadTestimonials();
   loadVideoSection();
   loadProjects();
+  loadDesignProjects();
   loadFooterImages();
+
+  initScrollTextOverflow();
 });
+
+}
