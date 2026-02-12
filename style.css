@@ -1127,7 +1127,7 @@ input[type="submit"]:hover {
   }
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 1200px) {
   .hamburger {
     display: flex;
   }
@@ -1354,7 +1354,7 @@ input[type="submit"]:hover {
   --nav-height: 72px;
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 1200px) {
   nav {
     padding: 0.85rem 1rem;
     min-height: var(--nav-height);
@@ -1397,7 +1397,7 @@ input[type="submit"]:hover {
   }
 }
 
-@media (orientation: landscape) and (max-width: 1000px) {
+@media (orientation: landscape) and (max-width: 1200px) {
   .nav-links {
     width: min(72vw, 420px);
   }
@@ -1431,5 +1431,89 @@ input[type="submit"]:hover {
   .centered-link {
     font-size: 0.95rem;
     padding: 0.5rem 0.35rem;
+  }
+}
+
+/* === Tablet/Nav Congestion Fixes === */
+nav {
+  gap: 0.65rem;
+}
+
+.clock-container {
+  flex: 0 0 30px;
+}
+
+#logo {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.15;
+}
+
+@media (max-width: 1200px) {
+  nav {
+    justify-content: flex-start;
+  }
+
+  #logo {
+    max-width: calc(100% - 86px);
+    font-size: clamp(1rem, 2.1vw, 1.2rem);
+    margin-right: auto;
+    padding-right: 0.5rem;
+  }
+
+  .hamburger {
+    margin-left: auto;
+    display: flex !important;
+  }
+
+  .nav-links {
+    width: min(78vw, 380px);
+  }
+
+  .nav-links a,
+  .centered-link {
+    color: #fff !important;
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 1024px) and (orientation: portrait) {
+  #logo {
+    max-width: calc(100% - 82px);
+    font-size: 1.02rem;
+  }
+}
+
+@media (max-width: 1180px) and (orientation: landscape) {
+  #logo {
+    max-width: calc(100% - 82px);
+    font-size: 1.05rem;
+  }
+
+  .nav-links {
+    width: min(76vw, 390px);
+  }
+}
+
+@media (min-width: 1201px) and (max-width: 1368px) {
+  nav {
+    padding-left: 2.2%;
+    padding-right: 2.2%;
+  }
+
+  .nav-links li {
+    margin-left: 1.05rem;
+  }
+
+  .nav-links a {
+    font-size: 0.96rem;
+  }
+
+  #logo {
+    max-width: 170px;
+    font-size: 1.05rem;
   }
 }
