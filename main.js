@@ -964,7 +964,7 @@ function initResponsiveNavbar() {
     const navHeight = Math.ceil(nav.getBoundingClientRect().height);
     document.documentElement.style.setProperty("--nav-height", navHeight + "px");
 
-    if (window.matchMedia("(max-width: 1000px)").matches) {
+    if (window.matchMedia("(max-width: 1200px)").matches) {
       navLinks.style.top = navHeight + "px";
       navLinks.style.height = "calc(100dvh - " + navHeight + "px)";
     } else {
@@ -988,7 +988,7 @@ function initResponsiveNavbar() {
   });
 
   document.addEventListener("click", (e) => {
-    if (!window.matchMedia("(max-width: 1000px)").matches) return;
+    if (!window.matchMedia("(max-width: 1200px)").matches) return;
     if (!navLinks.classList.contains("nav-active")) return;
 
     const clickedInsideNav = nav.contains(e.target);
