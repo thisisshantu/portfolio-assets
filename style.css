@@ -108,9 +108,15 @@ nav {
   width: 100%;
   top: 0;
   z-index: 1000;
-  background: var(--secondary);
-  color: #fff;
-  transition: background 0.3s ease;
+  color: #f7fbff;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.14) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.42);
+  box-shadow:
+    0 10px 30px rgba(7, 14, 28, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58);
+  backdrop-filter: blur(26px) saturate(170%);
+  -webkit-backdrop-filter: blur(26px) saturate(170%);
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 nav ul,
@@ -127,10 +133,11 @@ nav ul li,
 
 nav a,
 .nav-links a {
-  color: #fff;
+  color: #f7fbff;
   text-decoration: none;
   font-weight: 560;
   letter-spacing: 0.01em;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
 }
 
 nav a:hover,
@@ -140,9 +147,9 @@ nav a:hover,
 
 .nav-links a.active-nav,
 nav a.active-nav {
-  color: var(--primary) !important;
+  color: #ffd06a !important;
   font-weight: 700;
-  border-bottom: 2px solid var(--primary);
+  border-bottom: 2px solid rgba(255, 208, 106, 0.95);
   transition: color 0.2s;
 }
 
@@ -155,9 +162,17 @@ nav a.active-nav {
 .hamburger div {
   width: 25px;
   height: 3px;
-  background: #fff;
+  background: #f7fbff;
   margin: 4px;
   transition: all 0.3s ease;
+}
+
+[data-theme='dark'] nav {
+  background: linear-gradient(145deg, rgba(18, 32, 53, 0.56) 0%, rgba(14, 24, 44, 0.36) 100%);
+  border-bottom-color: rgba(159, 202, 255, 0.28);
+  box-shadow:
+    0 12px 34px rgba(0, 0, 0, 0.46),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
 .nav-active {
@@ -1171,7 +1186,11 @@ input[type="submit"]:hover {
     right: 0;
     width: 60vw;
     height: calc(100vh - 20px);
-    background: var(--secondary);
+    background: linear-gradient(155deg, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.16) 100%);
+    border-left: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: -12px 0 30px rgba(8, 14, 30, 0.22);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
     flex-direction: column;
     align-items: center;
     transform: translateX(100%);
@@ -1197,6 +1216,11 @@ input[type="submit"]:hover {
 
   .nav-links::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.1);
+  }
+
+  [data-theme='dark'] .nav-links {
+    background: linear-gradient(155deg, rgba(17, 30, 50, 0.84) 0%, rgba(10, 19, 34, 0.72) 100%);
+    border-left-color: rgba(144, 193, 255, 0.25);
   }
 }
 
@@ -2207,5 +2231,181 @@ footer {
   #hero .container-home .col-lg-4.bg.position-fixed {
     width: min(320px, 82vw);
     height: min(320px, 82vw);
+  }
+}
+
+/* === WWDC Refinement Pass (single-profile hero + readability + fixed cards) === */
+
+/* 1) Readability fixes in light/dark for glass cards */
+.resume-item {
+  color: #1d2b3d !important;
+}
+
+.resume-item .resume-title {
+  color: #1d2b3d !important;
+}
+
+.resume-item .institute,
+.resume-item p {
+  color: #304255 !important;
+}
+
+.resume-item .time {
+  color: #e3a11d !important;
+}
+
+[data-theme='dark'] .resume-item {
+  color: #f2f7ff !important;
+}
+
+[data-theme='dark'] .resume-item .resume-title {
+  color: #f6f9ff !important;
+}
+
+[data-theme='dark'] .resume-item .institute,
+[data-theme='dark'] .resume-item p {
+  color: rgba(227, 237, 252, 0.92) !important;
+}
+
+[data-theme='dark'] .resume-item .time {
+  color: #ffc857 !important;
+}
+
+.project-card h3,
+.blog-card h3,
+.cert-name,
+.cert-org,
+.user-name,
+.recommendation-description {
+  color: #24364b;
+}
+
+[data-theme='dark'] .project-card h3,
+[data-theme='dark'] .blog-card h3,
+[data-theme='dark'] .cert-name,
+[data-theme='dark'] .cert-org,
+[data-theme='dark'] .user-name,
+[data-theme='dark'] .recommendation-description {
+  color: #eef4ff;
+}
+
+/* 2) Portfolio + Design fixed card size even on last page */
+#projects-container.project-grid,
+#design-container.project-grid {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 280px));
+  justify-content: center;
+  gap: 24px;
+}
+
+#projects-container .project-card,
+#design-container .project-card {
+  width: 280px;
+  min-width: 280px;
+  max-width: 280px;
+  height: 260px;
+}
+
+@media (max-width: 1024px) {
+  #projects-container.project-grid,
+  #design-container.project-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 240px));
+    gap: 18px;
+  }
+
+  #projects-container .project-card,
+  #design-container .project-card {
+    width: 240px;
+    min-width: 240px;
+    max-width: 240px;
+  }
+}
+
+@media (max-width: 640px) {
+  #projects-container.project-grid,
+  #design-container.project-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #projects-container .project-card,
+  #design-container .project-card {
+    width: min(92vw, 340px);
+    min-width: min(92vw, 340px);
+    max-width: min(92vw, 340px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* 3) Hero structure polish: keep one profile circle (no double-circle look) */
+#hero.hero::after {
+  display: none;
+}
+
+#hero .container-home .col-lg-4.bg.position-fixed {
+  display: none !important;
+}
+
+#hero .main-img-mobile {
+  display: block !important;
+}
+
+#hero .main-img-mobile .circular-img-container {
+  width: min(320px, 70vw);
+  height: min(320px, 70vw);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  box-shadow:
+    0 18px 42px rgba(7, 16, 34, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.44);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.08) 100%);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+#hero .main-img-mobile .circular-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#hero .container-home .text-sm-center.text-lg-start {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#hero .container-home .btn {
+  margin-top: 14px;
+}
+
+/* 4) WWDC-like clean spacing and premium calm rhythm */
+#hero .hero-content {
+  border-radius: 30px;
+  padding: clamp(28px, 3.6vw, 44px);
+}
+
+#hero .hero-left {
+  padding-right: clamp(4px, 1.2vw, 18px);
+}
+
+#hero .hero-left h1 {
+  max-width: 12.2ch;
+}
+
+#hero .hero-left h3 {
+  max-width: 41ch;
+}
+
+@media (max-width: 992px) {
+  #hero .hero-content {
+    padding: 22px 16px;
+  }
+
+  #hero .main-img-mobile .circular-img-container {
+    width: min(260px, 72vw);
+    height: min(260px, 72vw);
   }
 }
