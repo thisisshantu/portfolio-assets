@@ -953,7 +953,7 @@ async function loadBlogs() {
   if (!container) return false;
 
   const SHEET_ID = '1VYbIKHEgmpHljYLTTHoonE_IlARRpxudiQ_0QFKDRkU';
-  const SHEET_NAMES = ['blogs', 'Blogs', 'blog', 'Blog'];
+  const SHEET_NAMES = ['blogs'];
 
   const getCellValue = (cell) => {
     if (!cell) return '';
