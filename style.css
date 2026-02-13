@@ -4,7 +4,9 @@
   --text: #333;
   --bg: #f5f5f5;
   --card: #fff;
-  --font-family: 'Poppins', sans-serif;
+  --font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
 
   --dark-bg: #121212;
   --dark-card: #1e1e1e;
@@ -45,6 +47,10 @@ body {
   color: var(--text);
   background: var(--bg);
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  letter-spacing: 0.005em;
 }
 
 img {
@@ -69,7 +75,18 @@ h2 {
   margin-bottom: 3rem;
   color: var(--secondary);
   animation: slideIn 1s ease-in-out;
+  font-family: var(--font-display);
   font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+h1,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  letter-spacing: -0.015em;
 }
 
 [data-theme="dark"] h1,
@@ -112,7 +129,8 @@ nav a,
 .nav-links a {
   color: #fff;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 560;
+  letter-spacing: 0.01em;
 }
 
 nav a:hover,
@@ -236,11 +254,13 @@ nav a.active-nav {
   margin-bottom: 18px;
   text-align: left;
   line-height: 1.1;
+  letter-spacing: -0.028em;
 }
 
 .hero-left h3 {
   font-size: 1.2rem;
-  font-weight: 500;
+  font-weight: 450;
+  letter-spacing: 0.004em;
 }
 
 .hero-badge {
@@ -316,10 +336,11 @@ nav a.active-nav {
   background: var(--primary);
   color: #fff;
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 620;
   border-radius: 30px;
   transition: background 0.3s ease, transform 0.3s ease;
   margin: 0.5rem;
+  letter-spacing: 0.01em;
 }
 
 .btn:hover {
@@ -344,6 +365,7 @@ nav a.active-nav {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   animation: fadeInUp 1s ease-in-out;
   text-align: justify;
+  border-radius: 16px;
 }
 
 .card:hover {
@@ -1135,7 +1157,7 @@ input[type="submit"]:hover {
   .centered-link {
     display: block;
     text-align: center;
-    font-family: Arial, sans-serif;
+    font-family: var(--font-family);
     color: #000;
     padding: 10px;
     text-decoration: none;
@@ -1547,12 +1569,15 @@ nav {
   margin: 0 0 0.45rem;
   font-size: 1.15rem;
   line-height: 1.35;
+  font-weight: 650;
+  letter-spacing: -0.015em;
 }
 
 .blog-meta {
   font-size: 0.9rem;
   opacity: 0.8;
   margin-bottom: 0.45rem;
+  font-weight: 520;
 }
 
 [data-theme="dark"] .blog-card {
@@ -1586,6 +1611,7 @@ nav {
   margin: 0;
   padding-right: 0.35rem;
   line-height: 1.45;
+  font-weight: 430;
 }
 
 .blog-excerpt::-webkit-scrollbar {
@@ -1626,7 +1652,7 @@ nav {
   border: 1px solid rgba(0, 0, 0, 0.2);
   background: var(--card);
   color: var(--text);
-  font-weight: 600;
+  font-weight: 620;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -1646,6 +1672,21 @@ nav {
   border-color: rgba(255, 255, 255, 0.25);
 }
 
+[data-theme='dark'] body {
+  color: #eef2f8;
+}
+
+[data-theme='dark'] .card,
+[data-theme='dark'] .resume-item,
+[data-theme='dark'] .certification-card,
+[data-theme='dark'] .project-card,
+[data-theme='dark'] .recommendation-card,
+[data-theme='dark'] .blog-card,
+[data-theme='dark'] .overlay-content,
+[data-theme='dark'] .popup-content {
+  color: #f2f6ff;
+}
+
 /* === Floating Document Symbols Background === */
 section,
 footer {
@@ -1659,6 +1700,97 @@ footer {
   overflow: hidden;
   pointer-events: none;
   z-index: 1;
+}
+
+/* === Crystal Glass Design Layer (2026) === */
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.22);
+  --glass-bg-strong: rgba(255, 255, 255, 0.3);
+  --glass-border: rgba(255, 255, 255, 0.42);
+  --glass-highlight: rgba(255, 255, 255, 0.62);
+  --glass-shadow: 0 14px 38px rgba(16, 22, 38, 0.18);
+}
+
+[data-theme="dark"] {
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-bg-strong: rgba(255, 255, 255, 0.12);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-highlight: rgba(255, 255, 255, 0.28);
+  --glass-shadow: 0 18px 42px rgba(0, 0, 0, 0.45);
+}
+
+.card,
+.resume-item,
+.certification-card,
+.project-card,
+.recommendation-card,
+.blog-card,
+.overlay-content,
+.popup-content {
+  position: relative;
+  background: linear-gradient(160deg, var(--glass-bg-strong) 0%, var(--glass-bg) 100%) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+}
+
+.card::before,
+.resume-item::before,
+.certification-card::before,
+.project-card::before,
+.recommendation-card::before,
+.blog-card::before,
+.overlay-content::before,
+.popup-content::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(135deg, var(--glass-highlight) 0%, rgba(255, 255, 255, 0.04) 46%, rgba(255, 255, 255, 0) 100%);
+}
+
+.certification-card:hover,
+.project-card:hover,
+.blog-card:hover,
+.recommendation-card:hover,
+.card:hover {
+  border-color: rgba(255, 255, 255, 0.66) !important;
+  box-shadow: 0 18px 44px rgba(20, 32, 58, 0.22);
+}
+
+.btn,
+#submit-btn,
+.blog-page-btn,
+.popup-content .btn,
+#popup-link,
+#overlay-url {
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.16) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.52) !important;
+  box-shadow:
+    0 8px 22px rgba(12, 18, 36, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.44);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+}
+
+.btn:hover,
+#submit-btn:hover,
+.blog-page-btn:hover,
+#popup-link:hover,
+#overlay-url:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.72) !important;
+  box-shadow:
+    0 12px 28px rgba(8, 14, 32, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.56);
+}
+
+.blog-page-btn.active {
+  background: linear-gradient(150deg, rgba(255, 180, 0, 0.86) 0%, rgba(255, 140, 0, 0.76) 100%) !important;
+  border-color: rgba(255, 212, 109, 0.92) !important;
+  color: #fff;
 }
 
 .doc-float-item {
