@@ -965,6 +965,25 @@ async function loadBlogs() {
     return '';
   };
 
+  const getDateValue = (cell) => {
+    if (!cell) return '';
+    // Prefer Google Sheets formatted display value (e.g., "Feb 2020")
+    if (cell.f !== undefined && cell.f !== null && String(cell.f).trim() !== '') {
+      return String(cell.f).trim();
+    }
+    const raw = cell.v !== undefined && cell.v !== null ? String(cell.v).trim() : '';
+    if (!raw) return '';
+    // Handle gviz raw date shape: Date(YYYY,MM,DD) where MM is zero-based.
+    const match = raw.match(/^Date\((\d+),(\d+),(\d+)\)$/);
+    if (match) {
+      const year = Number(match[1]);
+      const month = Number(match[2]);
+      const dateObj = new Date(year, month, 1);
+      return dateObj.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    }
+    return raw;
+  };
+
   let loadedAny = false;
 
   for (const sheetName of SHEET_NAMES) {
@@ -999,7 +1018,7 @@ async function loadBlogs() {
       dataRows.forEach((row) => {
         const title = getCellValue(row?.c?.[colTitle]);
         let postUrl = getCellValue(row?.c?.[colUrl]);
-        const date = getCellValue(row?.c?.[colDate]);
+        const date = getDateValue(row?.c?.[colDate]);
         const excerpt = getCellValue(row?.c?.[colExcerpt]);
 
         if (!title || !postUrl) return;
