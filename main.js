@@ -953,7 +953,7 @@ async function loadBlogs() {
   if (!container) return false;
 
   const SHEET_ID = '1VYbIKHEgmpHljYLTTHoonE_IlARRpxudiQ_0QFKDRkU';
-  const SHEET_NAMES = ['blogs'];
+  const SHEET_NAMES = ['blogs', 'Blogs', 'BLOGS', 'Sheet1', 'sheet1'];
 
   const getCellValue = (cell) => {
     if (!cell) return '';
@@ -974,13 +974,31 @@ async function loadBlogs() {
       const text = await response.text();
       const rows = parseGoogleResponse(text);
 
+      if (!rows || rows.length === 0) continue;
+
+      // Map columns from header row first; fall back to A-D if headers are absent.
+      const headers = (rows[0]?.c || []).map((c) => getCellValue(c).toLowerCase());
+      const findCol = (aliases, fallbackIndex) => {
+        const idx = headers.findIndex((h) => aliases.some((a) => h === a || h.includes(a)));
+        return idx >= 0 ? idx : fallbackIndex;
+      };
+
+      const colTitle = findCol(['title', 'blog title', 'post title'], 0);
+      const colUrl = findCol(['url', 'link', 'post url', 'blog url'], 1);
+      const colDate = findCol(['date', 'published', 'publish date'], 2);
+      const colExcerpt = findCol(['excerpt', 'summary', 'description'], 3);
+
       rows.slice(1).forEach((row) => {
-        const title = getCellValue(row?.c?.[0]);
-        const postUrl = getCellValue(row?.c?.[1]);
-        const date = getCellValue(row?.c?.[2]);
-        const excerpt = getCellValue(row?.c?.[3]);
+        const title = getCellValue(row?.c?.[colTitle]);
+        let postUrl = getCellValue(row?.c?.[colUrl]);
+        const date = getCellValue(row?.c?.[colDate]);
+        const excerpt = getCellValue(row?.c?.[colExcerpt]);
 
         if (!title || !postUrl) return;
+        if (!/^https?:\/\//i.test(postUrl) && postUrl.includes('blogspot.com')) {
+          postUrl = 'https://' + postUrl.replace(/^\/+/, '');
+        }
+        if (!/^https?:\/\//i.test(postUrl)) return;
 
         const card =
           '<a class="blog-card" href="' + postUrl + '" target="_blank" rel="noopener noreferrer">' +
