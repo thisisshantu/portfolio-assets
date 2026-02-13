@@ -1122,7 +1122,47 @@ function initBlogsSection() {
   }, { once: true });
 }
 
+function initFloatingDocsBackground() {
+  if (document.getElementById('doc-float-layer')) return;
+
+  const layer = document.createElement('div');
+  layer.id = 'doc-float-layer';
+  layer.className = 'doc-float-layer';
+  layer.setAttribute('aria-hidden', 'true');
+  document.body.prepend(layer);
+
+  const symbols = ['📈', '📄', '📜', '📊'];
+  const count = window.matchMedia('(max-width: 768px)').matches ? 10 : 18;
+
+  for (let i = 0; i < count; i += 1) {
+    const item = document.createElement('span');
+    item.className = 'doc-float-item';
+    item.textContent = symbols[i % symbols.length];
+
+    const left = Math.random() * 100;
+    const size = 18 + Math.random() * 24;
+    const duration = 18 + Math.random() * 22;
+    const delay = -Math.random() * duration;
+    const driftStart = -20 + Math.random() * 40;
+    const driftEnd = -40 + Math.random() * 80;
+    const rotStart = -14 + Math.random() * 28;
+    const rotEnd = rotStart + (-20 + Math.random() * 40);
+
+    item.style.left = left + 'vw';
+    item.style.fontSize = size + 'px';
+    item.style.animationDuration = duration + 's';
+    item.style.animationDelay = delay + 's';
+    item.style.setProperty('--drift-start', driftStart + 'px');
+    item.style.setProperty('--drift-end', driftEnd + 'px');
+    item.style.setProperty('--rot-start', rotStart + 'deg');
+    item.style.setProperty('--rot-end', rotEnd + 'deg');
+
+    layer.appendChild(item);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  initFloatingDocsBackground();
   initFadeInObserver();
   initNavigation();
   initFaqSection();
