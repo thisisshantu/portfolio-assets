@@ -927,6 +927,33 @@ async function loadFooterImages() {
   }
 }
 
+function loadBlogs() {
+  const blogs = [
+    {
+      title: "The Impact of Sensory Marketing on Consumer Behavior",
+      url: "https://portfolioshantanu.blogspot.com/2026/02/the-impact-of-sensory-marketing-on.html",
+      date: "February 2026",
+      excerpt: "How sensory cues influence brand recall, engagement, and buying decisions."
+    }
+  ];
+
+  const container = document.getElementById("blogs-container");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  blogs.forEach((blog) => {
+    const card =
+      '<a class="blog-card" href="' + blog.url + '" target="_blank" rel="noopener noreferrer">' +
+        '<h3>' + blog.title + '</h3>' +
+        '<p class="blog-meta">' + blog.date + '</p>' +
+        '<p>' + blog.excerpt + '</p>' +
+      '</a>';
+
+    container.insertAdjacentHTML("beforeend", card);
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initFadeInObserver();
   initNavigation();
@@ -944,6 +971,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadProjects();
   loadDesignProjects();
   loadFooterImages();
+  loadBlogs();
 
   initScrollTextOverflow();
 });
