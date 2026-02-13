@@ -259,9 +259,10 @@ if (exploreBtn) {
 }
 // You can add more JS for interactivity as needed
 
-function parseGoogleSheetData(text) {
-  const json = JSON.parse(text.substring(47).slice(0, -2));
-  return json.table.rows;
+const PORTFOLIO_SHEET_ID = '1VYbIKHEgmpHljYLTTHoonE_IlARRpxudiQ_0QFKDRkU';
+
+function getSheetUrl(sheetName) {
+  return `https://docs.google.com/spreadsheets/d/${PORTFOLIO_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
 }
 
 function parseGoogleResponse(text) {
@@ -270,8 +271,7 @@ function parseGoogleResponse(text) {
 }
 
 async function loadExperience() {
-  const url =
-    'https://docs.google.com/spreadsheets/d/1VYbIKHEgmpHljYLTTHoonE_IlARRpxudiQ_0QFKDRkU/gviz/tq?tqx=out:json&sheet=Experience';
+  const url = getSheetUrl('Experience');
 
   const response = await fetch(url);
   const text = await response.text();
@@ -301,8 +301,7 @@ async function loadExperience() {
 }
 
 async function loadEducation() {
-  const url =
-    'https://docs.google.com/spreadsheets/d/1VYbIKHEgmpHljYLTTHoonE_IlARRpxudiQ_0QFKDRkU/gviz/tq?tqx=out:json&sheet=Education';
+  const url = getSheetUrl('Education');
 
   const response = await fetch(url);
   const text = await response.text();
@@ -332,8 +331,7 @@ async function loadEducation() {
 }
 
 async function loadHeroSection() {
-  const url =
-    'https://docs.google.com/spreadsheets/d/1VYbIKHEgmpHljYLTTHoonE_IlARRpxudiQ_0QFKDRkU/gviz/tq?tqx=out:json&sheet=hero';
+  const url = getSheetUrl('hero');
 
   const response = await fetch(url);
   const text = await response.text();
@@ -367,12 +365,6 @@ async function loadHeroSection() {
   // Image
   const heroImage = document.getElementById('hero-profile-image');
   if (heroImage) heroImage.src = heroData.profile_image;
-}
-
-/* ===== Google Sheets Helper (FINAL) ===== */
-function parseGoogleResponse(text) {
-  const json = JSON.parse(text.substring(47).slice(0, -2));
-  return json.table.rows;
 }
 
 /* ===== Date Formatter (Handles Google Date format) ===== */
@@ -457,8 +449,7 @@ function applySectionPagination(container, paginationId, cards) {
 
 /* ===== Certifications Loader ===== */
 async function loadCertifications() {
-  const url =
-    'https://docs.google.com/spreadsheets/d/1VYbIKHEgmpHljYLTTHoonE_IlARRpxudiQ_0QFKDRkU/gviz/tq?tqx=out:json&sheet=certifications';
+  const url = getSheetUrl('certifications');
 
   const response = await fetch(url);
   const text = await response.text();
@@ -505,10 +496,8 @@ async function loadCertifications() {
 }
 
 async function loadAboutSection() {
-  const SHEET_ID = '1VYbIKHEgmpHljYLTTHoonE_IlARRpxudiQ_0QFKDRkU';
-
   async function fetchSheet(sheet) {
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${sheet}`;
+    const url = getSheetUrl(sheet);
     const res = await fetch(url);
     const text = await res.text();
     return parseGoogleResponse(text);
@@ -597,10 +586,9 @@ async function loadAboutSection() {
 
 /* ===== Testimonials Loader (FINAL) ===== */
 async function loadTestimonials() {
-  const SHEET_ID = '1VYbIKHEgmpHljYLTTHoonE_IlARRpxudiQ_0QFKDRkU';
   const SHEET_NAME = 'testimonial'; // 👈 change ONLY if your tab name differs
 
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
+  const url = getSheetUrl(SHEET_NAME);
 
   try {
     const response = await fetch(url);
@@ -650,10 +638,9 @@ async function loadTestimonials() {
 }
 
 async function loadVideoSection() {
-  const SHEET_ID = '1VYbIKHEgmpHljYLTTHoonE_IlARRpxudiQ_0QFKDRkU';
   const SHEET_NAME = 'videos';
 
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
+  const url = getSheetUrl(SHEET_NAME);
 
   try {
     const response = await fetch(url);
@@ -680,10 +667,9 @@ const PROJECTS_DATA = {};
    LOAD PROJECTS
 ================================ */
 async function loadProjects() {
-  const SHEET_ID = '1VYbIKHEgmpHljYLTTHoonE_IlARRpxudiQ_0QFKDRkU';
   const SHEET_NAME = 'projects';
 
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
+  const url = getSheetUrl(SHEET_NAME);
 
   const response = await fetch(url);
   const text = await response.text();
@@ -773,36 +759,16 @@ function openProjectPopup(project) {
 }
 
 /* ================================
-   CLOSE POPUP
-================================ */
-document.addEventListener('click', function (e) {
-  if (
-    e.target.classList.contains('popup-close') ||
-    e.target.classList.contains('popup-overlay')
-  ) {
-    const popup = document.getElementById('project-popup');
-    if (popup) popup.classList.remove('active');
-  }
-});
-
-/* ================================
-   INIT
-================================ */
-
-/* ================================
    GLOBAL STORES
 ================================ */
 const DESIGN_PROJECTS = {};
-const DESIGN_ASSETS = {};
 
 /* ================================
    LOAD DESIGN PROJECTS
 ================================ */
 async function loadDesignProjects() {
-  const SHEET_ID = '1VYbIKHEgmpHljYLTTHoonE_IlARRpxudiQ_0QFKDRkU';
-
-  const projectURL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=design_projects`;
-  const assetURL   = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=design_assets`;
+  const projectURL = getSheetUrl('design_projects');
+  const assetURL = getSheetUrl('design_assets');
 
   const [projectRes, assetRes] = await Promise.all([
     fetch(projectURL).then(r => r.text()),
@@ -916,42 +882,25 @@ document.addEventListener('click', e => {
 });
 
 /* ================================
-   CLOSE POPUP
+   CLOSE POPUPS
 ================================ */
-document.addEventListener('click', e => {
+document.addEventListener('click', (e) => {
   if (
-    e.target.classList.contains('popup-close') ||
-    e.target.classList.contains('popup-overlay')
-  ) {
-    const designPopup = document.getElementById('design-popup');
-    if (designPopup) designPopup.classList.remove('active');
-  }
+    !e.target.classList.contains('popup-close') &&
+    !e.target.classList.contains('popup-overlay')
+  ) return;
+
+  const projectPopup = document.getElementById('project-popup');
+  const designPopup = document.getElementById('design-popup');
+  if (projectPopup) projectPopup.classList.remove('active');
+  if (designPopup) designPopup.classList.remove('active');
 });
-
-/* ================================
-   INIT
-================================ */
-
-/* ================================
-   Google Sheets Parser (required)
-================================ */
-function parseGoogleResponse(text) {
-  const json = JSON.parse(text.substring(47).slice(0, -2));
-  return json.table.rows;
-}
 
 /* ================================
    Footer Scrolling Images Loader
 ================================ */
 async function loadFooterImages() {
-  const SHEET_ID = '1VYbIKHEgmpHljYLTTHoonE_IlARRpxudiQ_0QFKDRkU';
-  const SHEET_NAME = 'footer_images';
-
-  const url =
-    'https://docs.google.com/spreadsheets/d/' +
-    SHEET_ID +
-    '/gviz/tq?tqx=out:json&sheet=' +
-    SHEET_NAME;
+  const url = getSheetUrl('footer_images');
 
   try {
     const response = await fetch(url);
@@ -1028,7 +977,6 @@ async function loadBlogs() {
     container.insertAdjacentElement('afterend', pagination);
   }
 
-  const SHEET_ID = '1VYbIKHEgmpHljYLTTHoonE_IlARRpxudiQ_0QFKDRkU';
   const SHEET_NAMES = ['blogs', 'Blogs', 'BLOGS', 'Sheet1', 'sheet1'];
 
   const getCellValue = (cell) => {
@@ -1060,8 +1008,7 @@ async function loadBlogs() {
   let loadedAny = false;
 
   for (const sheetName of SHEET_NAMES) {
-    const encodedSheet = encodeURIComponent(sheetName);
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodedSheet}`;
+    const url = getSheetUrl(sheetName);
 
     try {
       const response = await fetch(url);
@@ -1286,6 +1233,7 @@ function initHeroGearCluster() {
 document.addEventListener('DOMContentLoaded', () => {
   initFloatingDocsBackground();
   initHeroGearCluster();
+  initResponsiveNavbar();
   initFadeInObserver();
   initNavigation();
   initFaqSection();
@@ -1360,7 +1308,5 @@ function initResponsiveNavbar() {
 
   syncNavPanelSize();
 }
-
-document.addEventListener("DOMContentLoaded", initResponsiveNavbar);
 
 }
