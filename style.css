@@ -2472,3 +2472,46 @@ nav a.active-nav {
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
   }
 }
+
+/* === Unified Responsive Rows (Certifications / Portfolio / Design / Blogs) === */
+#certifications-container.certification-grid,
+#projects-container.project-grid,
+#design-container.project-grid,
+#blogs-container.blog-grid,
+#blog-container.blog-grid,
+#blogs .blog-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+@media (max-width: 1199px) and (min-width: 900px) {
+  #certifications-container.certification-grid,
+  #projects-container.project-grid,
+  #design-container.project-grid,
+  #blogs-container.blog-grid,
+  #blog-container.blog-grid,
+  #blogs .blog-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 899px) and (min-width: 640px) {
+  #certifications-container.certification-grid,
+  #projects-container.project-grid,
+  #design-container.project-grid,
+  #blogs-container.blog-grid,
+  #blog-container.blog-grid,
+  #blogs .blog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 639px) {
+  #certifications-container.certification-grid,
+  #projects-container.project-grid,
+  #design-container.project-grid,
+  #blogs-container.blog-grid,
+  #blog-container.blog-grid,
+  #blogs .blog-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
