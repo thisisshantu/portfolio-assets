@@ -411,16 +411,25 @@ function ensureSectionPagination(container, paginationId) {
   return pagination;
 }
 
+function getResponsiveItemsPerPage() {
+  if (window.matchMedia('(min-width: 1200px)').matches) return 4;
+  if (window.matchMedia('(min-width: 900px)').matches) return 3;
+  if (window.matchMedia('(min-width: 640px)').matches) return 2;
+  return 1;
+}
+
 function applySectionPagination(container, paginationId, cards) {
   if (!container) return;
   const pagination = ensureSectionPagination(container, paginationId);
   if (!pagination) return;
-  const pageSize = 4;
+  let activePage = 1;
+  let resizeTimer = null;
 
-  const totalPages = Math.max(1, Math.ceil(cards.length / pageSize));
   const renderPage = (page) => {
-    const currentPage = Math.min(Math.max(1, page), totalPages);
-    const start = (currentPage - 1) * pageSize;
+    const pageSize = getResponsiveItemsPerPage();
+    const totalPages = Math.max(1, Math.ceil(cards.length / pageSize));
+    activePage = Math.min(Math.max(1, page), totalPages);
+    const start = (activePage - 1) * pageSize;
     const pageCards = cards.slice(start, start + pageSize);
 
     container.innerHTML = '';
@@ -434,7 +443,7 @@ function applySectionPagination(container, paginationId, cards) {
       for (let i = 1; i <= totalPages; i += 1) {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'blog-page-btn section-page-btn' + (i === currentPage ? ' active' : '');
+        btn.className = 'blog-page-btn section-page-btn' + (i === activePage ? ' active' : '');
         btn.textContent = String(i);
         btn.addEventListener('click', () => renderPage(i));
         pagination.appendChild(btn);
@@ -445,6 +454,12 @@ function applySectionPagination(container, paginationId, cards) {
   };
 
   renderPage(1);
+
+  const onResize = () => {
+    if (resizeTimer) window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(() => renderPage(activePage), 120);
+  };
+  window.addEventListener('resize', onResize);
 }
 
 /* ===== Certifications Loader ===== */
@@ -968,7 +983,8 @@ async function loadBlogs() {
   const requestId = ++blogsLoadRequestId;
   const container = getBlogsContainer();
   if (!container) return false;
-  const pageSize = 4;
+  let activePage = 1;
+  let resizeTimer = null;
   let pagination = document.getElementById('blogs-pagination');
   if (!pagination) {
     pagination = document.createElement('div');
@@ -1060,11 +1076,12 @@ async function loadBlogs() {
 
       if (loadedAny) {
         if (requestId !== blogsLoadRequestId) return false;
-        const totalPages = Math.ceil(nextCards.length / pageSize);
         const renderPage = (page) => {
           if (requestId !== blogsLoadRequestId) return;
-          const currentPage = Math.max(1, Math.min(page, totalPages));
-          const start = (currentPage - 1) * pageSize;
+          const pageSize = getResponsiveItemsPerPage();
+          const totalPages = Math.max(1, Math.ceil(nextCards.length / pageSize));
+          activePage = Math.max(1, Math.min(page, totalPages));
+          const start = (activePage - 1) * pageSize;
           const pageCards = nextCards.slice(start, start + pageSize);
 
           container.innerHTML = '';
@@ -1080,7 +1097,7 @@ async function loadBlogs() {
           for (let i = 1; i <= totalPages; i += 1) {
             const btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = 'blog-page-btn' + (i === currentPage ? ' active' : '');
+            btn.className = 'blog-page-btn' + (i === activePage ? ' active' : '');
             btn.textContent = String(i);
             btn.addEventListener('click', () => renderPage(i));
             pagination.appendChild(btn);
@@ -1088,6 +1105,11 @@ async function loadBlogs() {
         };
 
         renderPage(1);
+        window.addEventListener('resize', () => {
+          if (requestId !== blogsLoadRequestId) return;
+          if (resizeTimer) window.clearTimeout(resizeTimer);
+          resizeTimer = window.setTimeout(() => renderPage(activePage), 120);
+        });
         return true;
       }
     } catch (error) {
