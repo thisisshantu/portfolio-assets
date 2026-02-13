@@ -927,16 +927,7 @@ async function loadFooterImages() {
   }
 }
 
-function loadBlogs() {
-  const blogs = [
-    {
-      title: "The Impact of Sensory Marketing on Consumer Behavior",
-      url: "https://portfolioshantanu.blogspot.com/2026/02/the-impact-of-sensory-marketing-on.html",
-      date: "February 2026",
-      excerpt: "How sensory cues influence brand recall, engagement, and buying decisions."
-    }
-  ];
-
+function getBlogsContainer() {
   let container =
     document.getElementById('blogs-container') ||
     document.getElementById('blog-container') ||
@@ -954,37 +945,70 @@ function loadBlogs() {
     }
   }
 
+  return container || null;
+}
+
+async function loadBlogs() {
+  const container = getBlogsContainer();
   if (!container) return false;
 
-  container.innerHTML = '';
+  const SHEET_ID = '1VYbIKHEgmpHljYLTTHoonE_IlARRpxudiQ_0QFKDRkU';
+  const SHEET_NAME = 'blogs';
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
 
-  blogs.forEach((blog) => {
-    const card =
-      '<a class="blog-card" href="' + blog.url + '" target="_blank" rel="noopener noreferrer">' +
-        '<h3>' + blog.title + '</h3>' +
-        '<p class="blog-meta">' + blog.date + '</p>' +
-        '<p>' + blog.excerpt + '</p>' +
-      '</a>';
+  try {
+    const response = await fetch(url);
+    const text = await response.text();
+    const rows = parseGoogleResponse(text);
 
-    container.insertAdjacentHTML('beforeend', card);
-  });
+    container.innerHTML = '';
 
-  return true;
+    rows.slice(1).forEach((row) => {
+      const title = row.c[0]?.v;
+      const postUrl = row.c[1]?.v;
+      const date = row.c[2]?.v || '';
+      const excerpt = row.c[3]?.v || '';
+
+      if (!title || !postUrl) return;
+
+      const card =
+        '<a class="blog-card" href="' + postUrl + '" target="_blank" rel="noopener noreferrer">' +
+          '<h3>' + title + '</h3>' +
+          '<p class="blog-meta">' + date + '</p>' +
+          '<p>' + excerpt + '</p>' +
+        '</a>';
+
+      container.insertAdjacentHTML('beforeend', card);
+    });
+
+    return container.children.length > 0;
+  } catch (error) {
+    console.error('Error loading blogs:', error);
+    return false;
+  }
 }
 
 function initBlogsSection() {
-  if (loadBlogs()) return;
+  loadBlogs().then((ok) => {
+    if (ok) return;
 
-  let attempts = 0;
-  const maxAttempts = 15;
-  const timer = setInterval(() => {
-    attempts += 1;
-    if (loadBlogs() || attempts >= maxAttempts) {
-      clearInterval(timer);
-    }
-  }, 300);
+    let attempts = 0;
+    const maxAttempts = 15;
 
-  window.addEventListener('load', loadBlogs, { once: true });
+    const retry = async () => {
+      attempts += 1;
+      const loaded = await loadBlogs();
+      if (!loaded && attempts < maxAttempts) {
+        setTimeout(retry, 300);
+      }
+    };
+
+    retry();
+  });
+
+  window.addEventListener('load', () => {
+    loadBlogs();
+  }, { once: true });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
