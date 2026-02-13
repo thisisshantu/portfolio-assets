@@ -1692,3 +1692,50 @@ nav {
 [data-theme="dark"] .blog-page-btn {
   border-color: rgba(255, 255, 255, 0.25);
 }
+
+/* === Floating Document Symbols Background === */
+section,
+footer {
+  position: relative;
+  z-index: 2;
+}
+
+.doc-float-layer {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.doc-float-item {
+  position: absolute;
+  bottom: -18vh;
+  opacity: 0;
+  filter: grayscale(1) saturate(0) contrast(1.15);
+  user-select: none;
+  will-change: transform, opacity;
+  animation-name: docs-float-up;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes docs-float-up {
+  0% {
+    transform: translate3d(var(--drift-start), 0, 0) rotate(var(--rot-start));
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 0.08;
+  }
+
+  90% {
+    opacity: 0.08;
+  }
+
+  100% {
+    transform: translate3d(var(--drift-end), -135vh, 0) rotate(var(--rot-end));
+    opacity: 0;
+  }
+}
