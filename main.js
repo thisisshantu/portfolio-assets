@@ -937,16 +937,26 @@ function loadBlogs() {
     }
   ];
 
-  let container = document.getElementById("blogs-container") || document.getElementById("blog-container");
+  let container =
+    document.getElementById('blogs-container') ||
+    document.getElementById('blog-container') ||
+    document.querySelector('#blogs .blog-grid') ||
+    document.querySelector('.blog-grid');
+
   if (!container) {
-    container = document.querySelector("#blogs .blog-grid");
-  }
-  if (!container) {
-    console.warn("Blogs container not found. Expected #blogs-container or #blog-container.");
-    return;
+    const blogsSection = document.getElementById('blogs');
+    const targetParent = blogsSection?.querySelector('.container') || blogsSection;
+    if (targetParent) {
+      container = document.createElement('div');
+      container.id = 'blogs-container';
+      container.className = 'blog-grid';
+      targetParent.appendChild(container);
+    }
   }
 
-  container.innerHTML = "";
+  if (!container) return false;
+
+  container.innerHTML = '';
 
   blogs.forEach((blog) => {
     const card =
@@ -956,8 +966,25 @@ function loadBlogs() {
         '<p>' + blog.excerpt + '</p>' +
       '</a>';
 
-    container.insertAdjacentHTML("beforeend", card);
+    container.insertAdjacentHTML('beforeend', card);
   });
+
+  return true;
+}
+
+function initBlogsSection() {
+  if (loadBlogs()) return;
+
+  let attempts = 0;
+  const maxAttempts = 15;
+  const timer = setInterval(() => {
+    attempts += 1;
+    if (loadBlogs() || attempts >= maxAttempts) {
+      clearInterval(timer);
+    }
+  }, 300);
+
+  window.addEventListener('load', loadBlogs, { once: true });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -977,7 +1004,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadProjects();
   loadDesignProjects();
   loadFooterImages();
-  loadBlogs();
+  initBlogsSection();
 
   initScrollTextOverflow();
 });
