@@ -2409,3 +2409,60 @@ footer {
     height: min(260px, 72vw);
   }
 }
+
+/* === Nav Readability Hardening (all sections, all modes) === */
+nav {
+  background: linear-gradient(145deg, rgba(20, 38, 62, 0.84) 0%, rgba(16, 30, 52, 0.74) 100%) !important;
+  border-bottom: 1px solid rgba(203, 228, 255, 0.34) !important;
+  box-shadow:
+    0 10px 28px rgba(3, 8, 18, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(26px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(170%) !important;
+}
+
+[data-theme='dark'] nav {
+  background: linear-gradient(145deg, rgba(9, 18, 33, 0.9) 0%, rgba(10, 20, 36, 0.82) 100%) !important;
+  border-bottom-color: rgba(120, 165, 220, 0.3) !important;
+}
+
+nav a,
+.nav-links a,
+#logo,
+.hamburger div {
+  color: #f7fbff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+nav a:hover,
+.nav-links a:hover {
+  color: #ffd27b !important;
+}
+
+.nav-links a.active-nav,
+nav a.active-nav {
+  color: #ffd27b !important;
+  border-bottom-color: rgba(255, 210, 123, 0.95) !important;
+}
+
+@media (max-width: 1200px) {
+  .nav-links {
+    background: linear-gradient(165deg, rgba(16, 31, 53, 0.95) 0%, rgba(13, 26, 45, 0.9) 100%) !important;
+    border-left: 1px solid rgba(201, 226, 255, 0.28) !important;
+    box-shadow: -18px 0 36px rgba(0, 0, 0, 0.34) !important;
+    backdrop-filter: blur(24px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+  }
+
+  [data-theme='dark'] .nav-links {
+    background: linear-gradient(165deg, rgba(10, 19, 35, 0.96) 0%, rgba(8, 16, 29, 0.92) 100%) !important;
+    border-left-color: rgba(112, 154, 206, 0.28) !important;
+  }
+
+  .nav-links a,
+  .centered-link {
+    color: #f4f8ff !important;
+    font-weight: 620 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+}
