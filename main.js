@@ -954,6 +954,14 @@ async function loadBlogs() {
   const requestId = ++blogsLoadRequestId;
   const container = getBlogsContainer();
   if (!container) return false;
+  const pageSize = 4;
+  let pagination = document.getElementById('blogs-pagination');
+  if (!pagination) {
+    pagination = document.createElement('div');
+    pagination.id = 'blogs-pagination';
+    pagination.className = 'blog-pagination';
+    container.insertAdjacentElement('afterend', pagination);
+  }
 
   const SHEET_ID = '1VYbIKHEgmpHljYLTTHoonE_IlARRpxudiQ_0QFKDRkU';
   const SHEET_NAMES = ['blogs', 'Blogs', 'BLOGS', 'Sheet1', 'sheet1'];
@@ -1031,7 +1039,7 @@ async function loadBlogs() {
           '<a class="blog-card" href="' + postUrl + '" target="_blank" rel="noopener noreferrer">' +
             '<h3>' + title + '</h3>' +
             '<p class="blog-meta">' + date + '</p>' +
-            '<p>' + excerpt + '</p>' +
+            '<p class="blog-excerpt">' + excerpt + '</p>' +
           '</a>';
 
         nextCards.push(card);
@@ -1040,8 +1048,34 @@ async function loadBlogs() {
 
       if (loadedAny) {
         if (requestId !== blogsLoadRequestId) return false;
-        container.innerHTML = '';
-        container.insertAdjacentHTML('beforeend', nextCards.join(''));
+        const totalPages = Math.ceil(nextCards.length / pageSize);
+        const renderPage = (page) => {
+          if (requestId !== blogsLoadRequestId) return;
+          const currentPage = Math.max(1, Math.min(page, totalPages));
+          const start = (currentPage - 1) * pageSize;
+          const pageCards = nextCards.slice(start, start + pageSize);
+
+          container.innerHTML = '';
+          container.insertAdjacentHTML('beforeend', pageCards.join(''));
+
+          pagination.innerHTML = '';
+          if (totalPages <= 1) {
+            pagination.style.display = 'none';
+            return;
+          }
+
+          pagination.style.display = 'flex';
+          for (let i = 1; i <= totalPages; i += 1) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'blog-page-btn' + (i === currentPage ? ' active' : '');
+            btn.textContent = String(i);
+            btn.addEventListener('click', () => renderPage(i));
+            pagination.appendChild(btn);
+          }
+        };
+
+        renderPage(1);
         return true;
       }
     } catch (error) {
@@ -1051,6 +1085,10 @@ async function loadBlogs() {
 
   // Show a visible fallback so the section never appears empty while debugging data issues.
   if (requestId !== blogsLoadRequestId) return false;
+  if (pagination) {
+    pagination.innerHTML = '';
+    pagination.style.display = 'none';
+  }
   container.innerHTML =
     '<div class="blog-card">' +
       '<h3>Blogs are being updated</h3>' +
