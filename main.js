@@ -1131,16 +1131,50 @@ function initFloatingDocsBackground() {
   layer.setAttribute('aria-hidden', 'true');
   document.body.prepend(layer);
 
-  const symbols = ['📈', '📄', '📜', '📊'];
-  const count = window.matchMedia('(max-width: 768px)').matches ? 10 : 18;
+  const symbols = [
+    { type: 'emoji', value: '📈' },
+    { type: 'emoji', value: '📄' },
+    { type: 'emoji', value: '📜' },
+    { type: 'emoji', value: '📊' },
+    { type: 'emoji', value: '📝' },
+    { type: 'emoji', value: '📑' },
+    { type: 'emoji', value: '📃' },
+    { type: 'emoji', value: '🗂️' },
+    { type: 'emoji', value: '🗃️' },
+    { type: 'emoji', value: '📋' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoftexcel/217346', alt: 'Excel' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoftpowerpoint/B7472A', alt: 'PowerPoint' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoftaccess/A4373A', alt: 'Access' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoftteams/6264A7', alt: 'Teams' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoftoutlook/0078D4', alt: 'Outlook' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/powerautomate/0066FF', alt: 'Power Automate' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/notion/000000', alt: 'Notion' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/google/4285F4', alt: 'Google' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/googleslides/FBBC04', alt: 'Google Slides' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/googlesheets/34A853', alt: 'Google Sheets' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/applenotes/FFCC00', alt: 'Apple Notes' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/apple/000000', alt: 'Apple' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoft365/D83B01', alt: 'Microsoft 365' }
+  ];
+  const count = window.matchMedia('(max-width: 768px)').matches ? 22 : 44;
 
   for (let i = 0; i < count; i += 1) {
     const item = document.createElement('span');
     item.className = 'doc-float-item';
-    item.textContent = symbols[i % symbols.length];
+    const token = symbols[i % symbols.length];
+    if (token.type === 'icon') {
+      const img = document.createElement('img');
+      img.className = 'doc-float-icon';
+      img.src = token.value;
+      img.alt = token.alt;
+      img.loading = 'lazy';
+      item.appendChild(img);
+    } else {
+      item.textContent = token.value;
+    }
 
     const left = Math.random() * 100;
-    const size = 18 + Math.random() * 24;
+    const size = 14 + Math.random() * 42;
     const duration = 18 + Math.random() * 22;
     const delay = -Math.random() * duration;
     const driftStart = -20 + Math.random() * 40;
@@ -1150,6 +1184,8 @@ function initFloatingDocsBackground() {
 
     item.style.left = left + 'vw';
     item.style.fontSize = size + 'px';
+    item.style.width = size + 'px';
+    item.style.height = size + 'px';
     item.style.animationDuration = duration + 's';
     item.style.animationDelay = delay + 's';
     item.style.setProperty('--drift-start', driftStart + 'px');
