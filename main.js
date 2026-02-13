@@ -953,39 +953,54 @@ async function loadBlogs() {
   if (!container) return false;
 
   const SHEET_ID = '1VYbIKHEgmpHljYLTTHoonE_IlARRpxudiQ_0QFKDRkU';
-  const SHEET_NAME = 'blogs';
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
+  const SHEET_NAMES = ['blogs', 'Blogs', 'blog', 'Blog'];
 
-  try {
-    const response = await fetch(url);
-    const text = await response.text();
-    const rows = parseGoogleResponse(text);
+  const getCellValue = (cell) => {
+    if (!cell) return '';
+    if (cell.v !== undefined && cell.v !== null) return String(cell.v).trim();
+    if (cell.f !== undefined && cell.f !== null) return String(cell.f).trim();
+    return '';
+  };
 
-    container.innerHTML = '';
+  container.innerHTML = '';
+  let loadedAny = false;
 
-    rows.slice(1).forEach((row) => {
-      const title = row.c[0]?.v;
-      const postUrl = row.c[1]?.v;
-      const date = row.c[2]?.v || '';
-      const excerpt = row.c[3]?.v || '';
+  for (const sheetName of SHEET_NAMES) {
+    const encodedSheet = encodeURIComponent(sheetName);
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodedSheet}`;
 
-      if (!title || !postUrl) return;
+    try {
+      const response = await fetch(url);
+      const text = await response.text();
+      const rows = parseGoogleResponse(text);
 
-      const card =
-        '<a class="blog-card" href="' + postUrl + '" target="_blank" rel="noopener noreferrer">' +
-          '<h3>' + title + '</h3>' +
-          '<p class="blog-meta">' + date + '</p>' +
-          '<p>' + excerpt + '</p>' +
-        '</a>';
+      rows.slice(1).forEach((row) => {
+        const title = getCellValue(row?.c?.[0]);
+        const postUrl = getCellValue(row?.c?.[1]);
+        const date = getCellValue(row?.c?.[2]);
+        const excerpt = getCellValue(row?.c?.[3]);
 
-      container.insertAdjacentHTML('beforeend', card);
-    });
+        if (!title || !postUrl) return;
 
-    return container.children.length > 0;
-  } catch (error) {
-    console.error('Error loading blogs:', error);
-    return false;
+        const card =
+          '<a class="blog-card" href="' + postUrl + '" target="_blank" rel="noopener noreferrer">' +
+            '<h3>' + title + '</h3>' +
+            '<p class="blog-meta">' + date + '</p>' +
+            '<p>' + excerpt + '</p>' +
+          '</a>';
+
+        container.insertAdjacentHTML('beforeend', card);
+        loadedAny = true;
+      });
+
+      if (loadedAny) return true;
+    } catch (error) {
+      // try next sheet candidate
+    }
   }
+
+  console.warn('Blogs could not be loaded. Check sheet tab name and sharing settings.');
+  return false;
 }
 
 function initBlogsSection() {
@@ -993,13 +1008,13 @@ function initBlogsSection() {
     if (ok) return;
 
     let attempts = 0;
-    const maxAttempts = 15;
+    const maxAttempts = 20;
 
     const retry = async () => {
       attempts += 1;
       const loaded = await loadBlogs();
       if (!loaded && attempts < maxAttempts) {
-        setTimeout(retry, 300);
+        setTimeout(retry, 400);
       }
     };
 
