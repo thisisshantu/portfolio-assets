@@ -937,8 +937,14 @@ function loadBlogs() {
     }
   ];
 
-  const container = document.getElementById("blogs-container");
-  if (!container) return;
+  let container = document.getElementById("blogs-container") || document.getElementById("blog-container");
+  if (!container) {
+    container = document.querySelector("#blogs .blog-grid");
+  }
+  if (!container) {
+    console.warn("Blogs container not found. Expected #blogs-container or #blog-container.");
+    return;
+  }
 
   container.innerHTML = "";
 
