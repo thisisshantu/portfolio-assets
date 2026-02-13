@@ -418,6 +418,8 @@ function getResponsiveItemsPerPage() {
   return 1;
 }
 
+const sectionResizeHandlers = {};
+
 function applySectionPagination(container, paginationId, cards) {
   if (!container) return;
   const pagination = ensureSectionPagination(container, paginationId);
@@ -459,6 +461,10 @@ function applySectionPagination(container, paginationId, cards) {
     if (resizeTimer) window.clearTimeout(resizeTimer);
     resizeTimer = window.setTimeout(() => renderPage(activePage), 120);
   };
+  if (sectionResizeHandlers[paginationId]) {
+    window.removeEventListener('resize', sectionResizeHandlers[paginationId]);
+  }
+  sectionResizeHandlers[paginationId] = onResize;
   window.addEventListener('resize', onResize);
 }
 
@@ -957,6 +963,7 @@ async function loadFooterImages() {
 }
 
 let blogsLoadRequestId = 0;
+let blogsResizeHandler = null;
 
 function getBlogsContainer() {
   let container =
@@ -1105,11 +1112,15 @@ async function loadBlogs() {
         };
 
         renderPage(1);
-        window.addEventListener('resize', () => {
+        if (blogsResizeHandler) {
+          window.removeEventListener('resize', blogsResizeHandler);
+        }
+        blogsResizeHandler = () => {
           if (requestId !== blogsLoadRequestId) return;
           if (resizeTimer) window.clearTimeout(resizeTimer);
           resizeTimer = window.setTimeout(() => renderPage(activePage), 120);
-        });
+        };
+        window.addEventListener('resize', blogsResizeHandler);
         return true;
       }
     } catch (error) {
