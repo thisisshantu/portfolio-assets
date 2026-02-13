@@ -1712,12 +1712,21 @@ footer {
   position: absolute;
   bottom: -18vh;
   opacity: 0;
-  filter: grayscale(1) saturate(0) contrast(1.15);
+  filter: saturate(1.05) contrast(1.02);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   user-select: none;
   will-change: transform, opacity;
   animation-name: docs-float-up;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
+}
+
+.doc-float-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 @keyframes docs-float-up {
