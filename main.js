@@ -1197,8 +1197,30 @@ function initFloatingDocsBackground() {
   }
 }
 
+function initHeroGearCluster() {
+  const hero = document.getElementById('hero');
+  if (!hero || hero.querySelector('.hero-gear-cluster')) return;
+
+  const cluster = document.createElement('button');
+  cluster.type = 'button';
+  cluster.className = 'hero-gear-cluster';
+  cluster.setAttribute('aria-label', 'Start gear animation');
+  cluster.setAttribute('title', 'Click to animate');
+  cluster.innerHTML =
+    '<span class="hero-gear gear-a"></span>' +
+    '<span class="hero-gear gear-b"></span>' +
+    '<span class="hero-gear gear-c"></span>';
+
+  cluster.addEventListener('click', () => {
+    cluster.classList.toggle('is-active');
+  });
+
+  hero.appendChild(cluster);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initFloatingDocsBackground();
+  initHeroGearCluster();
   initFadeInObserver();
   initNavigation();
   initFaqSection();
