@@ -927,6 +927,8 @@ async function loadFooterImages() {
   }
 }
 
+let blogsLoadRequestId = 0;
+
 function getBlogsContainer() {
   let container =
     document.getElementById('blogs-container') ||
@@ -949,6 +951,7 @@ function getBlogsContainer() {
 }
 
 async function loadBlogs() {
+  const requestId = ++blogsLoadRequestId;
   const container = getBlogsContainer();
   if (!container) return false;
 
@@ -962,7 +965,6 @@ async function loadBlogs() {
     return '';
   };
 
-  container.innerHTML = '';
   let loadedAny = false;
 
   for (const sheetName of SHEET_NAMES) {
@@ -973,6 +975,7 @@ async function loadBlogs() {
       const response = await fetch(url);
       const text = await response.text();
       const rows = parseGoogleResponse(text);
+      if (requestId !== blogsLoadRequestId) return false;
 
       if (!rows || rows.length === 0) continue;
 
@@ -992,6 +995,7 @@ async function loadBlogs() {
         headers.some((h) => ['url', 'link', 'post url', 'blog url'].some((k) => h === k || h.includes(k)));
       const dataRows = rows.slice(hasHeaderRow ? 1 : 0);
 
+      const nextCards = [];
       dataRows.forEach((row) => {
         const title = getCellValue(row?.c?.[colTitle]);
         let postUrl = getCellValue(row?.c?.[colUrl]);
@@ -1011,17 +1015,23 @@ async function loadBlogs() {
             '<p>' + excerpt + '</p>' +
           '</a>';
 
-        container.insertAdjacentHTML('beforeend', card);
+        nextCards.push(card);
         loadedAny = true;
       });
 
-      if (loadedAny) return true;
+      if (loadedAny) {
+        if (requestId !== blogsLoadRequestId) return false;
+        container.innerHTML = '';
+        container.insertAdjacentHTML('beforeend', nextCards.join(''));
+        return true;
+      }
     } catch (error) {
       // try next sheet candidate
     }
   }
 
   // Show a visible fallback so the section never appears empty while debugging data issues.
+  if (requestId !== blogsLoadRequestId) return false;
   container.innerHTML =
     '<div class="blog-card">' +
       '<h3>Blogs are being updated</h3>' +
