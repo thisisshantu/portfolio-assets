@@ -2143,6 +2143,12 @@ footer {
 }
 
 #hero .container-home .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1;
+  white-space: nowrap;
   min-width: 170px;
   height: 47px;
   padding: 0 20px;
