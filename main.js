@@ -405,14 +405,6 @@ function formatMonthYear(value) {
   return value;
 }
 
-const SECTION_PAGINATION_HANDLERS = {};
-
-function getSectionPageSize() {
-  if (window.matchMedia('(max-width: 640px)').matches) return 1;
-  if (window.matchMedia('(max-width: 1024px)').matches) return 2;
-  return 4;
-}
-
 function ensureSectionPagination(container, paginationId) {
   if (!container) return null;
 
@@ -431,20 +423,19 @@ function applySectionPagination(container, paginationId, cards) {
   if (!container) return;
   const pagination = ensureSectionPagination(container, paginationId);
   if (!pagination) return;
+  const pageSize = 4;
 
-  let currentPage = 1;
-
+  const totalPages = Math.max(1, Math.ceil(cards.length / pageSize));
   const renderPage = (page) => {
-    const pageSize = getSectionPageSize();
-    const totalPages = Math.max(1, Math.ceil(cards.length / pageSize));
-    currentPage = Math.min(Math.max(1, page), totalPages);
-
+    const currentPage = Math.min(Math.max(1, page), totalPages);
     const start = (currentPage - 1) * pageSize;
     const pageCards = cards.slice(start, start + pageSize);
-    container.innerHTML = pageCards.join('');
+
+    container.innerHTML = '';
+    container.insertAdjacentHTML('beforeend', pageCards.join(''));
 
     pagination.innerHTML = '';
-    if (cards.length <= pageSize) {
+    if (totalPages <= 1) {
       pagination.style.display = 'none';
     } else {
       pagination.style.display = 'flex';
@@ -460,19 +451,6 @@ function applySectionPagination(container, paginationId, cards) {
 
     initScrollTextOverflow();
   };
-
-  if (SECTION_PAGINATION_HANDLERS[paginationId]) {
-    window.removeEventListener('resize', SECTION_PAGINATION_HANDLERS[paginationId]);
-  }
-
-  let resizeTimer = null;
-  const handleResize = () => {
-    if (resizeTimer) window.clearTimeout(resizeTimer);
-    resizeTimer = window.setTimeout(() => renderPage(currentPage), 120);
-  };
-
-  SECTION_PAGINATION_HANDLERS[paginationId] = handleResize;
-  window.addEventListener('resize', handleResize);
 
   renderPage(1);
 }
