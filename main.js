@@ -367,8 +367,6 @@ async function loadHeroSection() {
   // Image
   const heroImage = document.getElementById('hero-profile-image');
   if (heroImage) heroImage.src = heroData.profile_image;
-
-  initHeroVisualDesign();
 }
 
 /* ===== Google Sheets Helper (FINAL) ===== */
@@ -1220,58 +1218,9 @@ function initHeroGearCluster() {
   hero.appendChild(cluster);
 }
 
-function initHeroVisualDesign() {
-  const hero = document.getElementById('hero');
-  const heroContent = hero ? hero.querySelector('.hero-content') : null;
-  if (!hero || !heroContent) return;
-  if (heroContent.dataset.heroVisualInit === '1') return;
-  heroContent.dataset.heroVisualInit = '1';
-
-  if (!hero.querySelector('.hero-orb.top')) {
-    const orbTop = document.createElement('span');
-    orbTop.className = 'hero-orb top';
-    hero.appendChild(orbTop);
-  }
-
-  if (!hero.querySelector('.hero-orb.bottom')) {
-    const orbBottom = document.createElement('span');
-    orbBottom.className = 'hero-orb bottom';
-    hero.appendChild(orbBottom);
-  }
-
-  const headline = document.getElementById('hero-headline');
-  if (headline && !headline.querySelector('.hero-name-accent')) {
-    const text = (headline.textContent || '').trim();
-    if (text.length > 0) {
-      const pieces = text.split(' ');
-      if (pieces.length > 1) {
-        const lastWord = pieces.pop();
-        headline.innerHTML = pieces.join(' ') + ' <span class="hero-name-accent">' + lastWord + '</span>';
-      }
-    }
-  }
-
-  const handleMove = (event) => {
-    const rect = heroContent.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
-    const y = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
-    heroContent.style.setProperty('--hero-mx', x.toFixed(3));
-    heroContent.style.setProperty('--hero-my', y.toFixed(3));
-  };
-
-  const handleLeave = () => {
-    heroContent.style.setProperty('--hero-mx', '0');
-    heroContent.style.setProperty('--hero-my', '0');
-  };
-
-  heroContent.addEventListener('mousemove', handleMove);
-  heroContent.addEventListener('mouseleave', handleLeave);
-}
-
 document.addEventListener('DOMContentLoaded', () => {
   initFloatingDocsBackground();
   initHeroGearCluster();
-  initHeroVisualDesign();
   initFadeInObserver();
   initNavigation();
   initFaqSection();
