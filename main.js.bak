@@ -927,7 +927,300 @@ async function loadFooterImages() {
   }
 }
 
+let blogsLoadRequestId = 0;
+
+function getBlogsContainer() {
+  let container =
+    document.getElementById('blogs-container') ||
+    document.getElementById('blog-container') ||
+    document.querySelector('#blogs .blog-grid') ||
+    document.querySelector('.blog-grid');
+
+  if (!container) {
+    const blogsSection = document.getElementById('blogs');
+    const targetParent = blogsSection?.querySelector('.container') || blogsSection;
+    if (targetParent) {
+      container = document.createElement('div');
+      container.id = 'blogs-container';
+      container.className = 'blog-grid';
+      targetParent.appendChild(container);
+    }
+  }
+
+  return container || null;
+}
+
+async function loadBlogs() {
+  const requestId = ++blogsLoadRequestId;
+  const container = getBlogsContainer();
+  if (!container) return false;
+  const pageSize = 4;
+  let pagination = document.getElementById('blogs-pagination');
+  if (!pagination) {
+    pagination = document.createElement('div');
+    pagination.id = 'blogs-pagination';
+    pagination.className = 'blog-pagination';
+    container.insertAdjacentElement('afterend', pagination);
+  }
+
+  const SHEET_ID = '1VYbIKHEgmpHljYLTTHoonE_IlARRpxudiQ_0QFKDRkU';
+  const SHEET_NAMES = ['blogs', 'Blogs', 'BLOGS', 'Sheet1', 'sheet1'];
+
+  const getCellValue = (cell) => {
+    if (!cell) return '';
+    if (cell.v !== undefined && cell.v !== null) return String(cell.v).trim();
+    if (cell.f !== undefined && cell.f !== null) return String(cell.f).trim();
+    return '';
+  };
+
+  const getDateValue = (cell) => {
+    if (!cell) return '';
+    // Prefer Google Sheets formatted display value (e.g., "Feb 2020")
+    if (cell.f !== undefined && cell.f !== null && String(cell.f).trim() !== '') {
+      return String(cell.f).trim();
+    }
+    const raw = cell.v !== undefined && cell.v !== null ? String(cell.v).trim() : '';
+    if (!raw) return '';
+    // Handle gviz raw date shape: Date(YYYY,MM,DD) where MM is zero-based.
+    const match = raw.match(/^Date\((\d+),(\d+),(\d+)\)$/);
+    if (match) {
+      const year = Number(match[1]);
+      const month = Number(match[2]);
+      const dateObj = new Date(year, month, 1);
+      return dateObj.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    }
+    return raw;
+  };
+
+  let loadedAny = false;
+
+  for (const sheetName of SHEET_NAMES) {
+    const encodedSheet = encodeURIComponent(sheetName);
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodedSheet}`;
+
+    try {
+      const response = await fetch(url);
+      const text = await response.text();
+      const rows = parseGoogleResponse(text);
+      if (requestId !== blogsLoadRequestId) return false;
+
+      if (!rows || rows.length === 0) continue;
+
+      // Map columns from header row first; fall back to A-D if headers are absent.
+      const headers = (rows[0]?.c || []).map((c) => getCellValue(c).toLowerCase());
+      const findCol = (aliases, fallbackIndex) => {
+        const idx = headers.findIndex((h) => aliases.some((a) => h === a || h.includes(a)));
+        return idx >= 0 ? idx : fallbackIndex;
+      };
+
+      const colTitle = findCol(['title', 'blog title', 'post title'], 0);
+      const colUrl = findCol(['url', 'link', 'post url', 'blog url'], 1);
+      const colDate = findCol(['date', 'published', 'publish date'], 2);
+      const colExcerpt = findCol(['excerpt', 'summary', 'description'], 3);
+      const hasHeaderRow =
+        headers.some((h) => ['title', 'blog title', 'post title'].some((k) => h === k || h.includes(k))) &&
+        headers.some((h) => ['url', 'link', 'post url', 'blog url'].some((k) => h === k || h.includes(k)));
+      const dataRows = rows.slice(hasHeaderRow ? 1 : 0);
+
+      const nextCards = [];
+      dataRows.forEach((row) => {
+        const title = getCellValue(row?.c?.[colTitle]);
+        let postUrl = getCellValue(row?.c?.[colUrl]);
+        const date = getDateValue(row?.c?.[colDate]);
+        const excerpt = getCellValue(row?.c?.[colExcerpt]);
+
+        if (!title || !postUrl) return;
+        if (!/^https?:\/\//i.test(postUrl) && postUrl.includes('blogspot.com')) {
+          postUrl = 'https://' + postUrl.replace(/^\/+/, '');
+        }
+        if (!/^https?:\/\//i.test(postUrl)) return;
+
+        const card =
+          '<a class="blog-card" href="' + postUrl + '" target="_blank" rel="noopener noreferrer">' +
+            '<h3>' + title + '</h3>' +
+            '<p class="blog-meta">' + date + '</p>' +
+            '<p class="blog-excerpt">' + excerpt + '</p>' +
+          '</a>';
+
+        nextCards.push(card);
+        loadedAny = true;
+      });
+
+      if (loadedAny) {
+        if (requestId !== blogsLoadRequestId) return false;
+        const totalPages = Math.ceil(nextCards.length / pageSize);
+        const renderPage = (page) => {
+          if (requestId !== blogsLoadRequestId) return;
+          const currentPage = Math.max(1, Math.min(page, totalPages));
+          const start = (currentPage - 1) * pageSize;
+          const pageCards = nextCards.slice(start, start + pageSize);
+
+          container.innerHTML = '';
+          container.insertAdjacentHTML('beforeend', pageCards.join(''));
+
+          pagination.innerHTML = '';
+          if (totalPages <= 1) {
+            pagination.style.display = 'none';
+            return;
+          }
+
+          pagination.style.display = 'flex';
+          for (let i = 1; i <= totalPages; i += 1) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'blog-page-btn' + (i === currentPage ? ' active' : '');
+            btn.textContent = String(i);
+            btn.addEventListener('click', () => renderPage(i));
+            pagination.appendChild(btn);
+          }
+        };
+
+        renderPage(1);
+        return true;
+      }
+    } catch (error) {
+      // try next sheet candidate
+    }
+  }
+
+  // Show a visible fallback so the section never appears empty while debugging data issues.
+  if (requestId !== blogsLoadRequestId) return false;
+  if (pagination) {
+    pagination.innerHTML = '';
+    pagination.style.display = 'none';
+  }
+  container.innerHTML =
+    '<div class="blog-card">' +
+      '<h3>Blogs are being updated</h3>' +
+      '<p class="blog-meta">Data source not found</p>' +
+      '<p>Please verify the Google Sheet tab name and rows.</p>' +
+    '</div>';
+  console.warn('Blogs could not be loaded. Check sheet tab name and sharing settings.');
+  return false;
+}
+
+function initBlogsSection() {
+  loadBlogs().then((ok) => {
+    if (ok) return;
+
+    let attempts = 0;
+    const maxAttempts = 20;
+
+    const retry = async () => {
+      attempts += 1;
+      const loaded = await loadBlogs();
+      if (!loaded && attempts < maxAttempts) {
+        setTimeout(retry, 400);
+      }
+    };
+
+    retry();
+  });
+
+  window.addEventListener('load', () => {
+    loadBlogs();
+  }, { once: true });
+}
+
+function initFloatingDocsBackground() {
+  if (document.getElementById('doc-float-layer')) return;
+
+  const layer = document.createElement('div');
+  layer.id = 'doc-float-layer';
+  layer.className = 'doc-float-layer';
+  layer.setAttribute('aria-hidden', 'true');
+  document.body.prepend(layer);
+
+  const symbols = [
+    { type: 'emoji', value: '📈' },
+    { type: 'emoji', value: '📄' },
+    { type: 'emoji', value: '📜' },
+    { type: 'emoji', value: '📊' },
+    { type: 'emoji', value: '📝' },
+    { type: 'emoji', value: '📑' },
+    { type: 'emoji', value: '📃' },
+    { type: 'emoji', value: '🗂️' },
+    { type: 'emoji', value: '🗃️' },
+    { type: 'emoji', value: '📋' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoftexcel/217346', alt: 'Excel' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoftpowerpoint/B7472A', alt: 'PowerPoint' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoftaccess/A4373A', alt: 'Access' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoftteams/6264A7', alt: 'Teams' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoftoutlook/0078D4', alt: 'Outlook' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/powerautomate/0066FF', alt: 'Power Automate' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/notion/000000', alt: 'Notion' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/google/4285F4', alt: 'Google' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/googleslides/FBBC04', alt: 'Google Slides' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/googlesheets/34A853', alt: 'Google Sheets' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/applenotes/FFCC00', alt: 'Apple Notes' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/apple/000000', alt: 'Apple' },
+    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoft365/D83B01', alt: 'Microsoft 365' }
+  ];
+  const count = window.matchMedia('(max-width: 768px)').matches ? 22 : 44;
+
+  for (let i = 0; i < count; i += 1) {
+    const item = document.createElement('span');
+    item.className = 'doc-float-item';
+    const token = symbols[i % symbols.length];
+    if (token.type === 'icon') {
+      const img = document.createElement('img');
+      img.className = 'doc-float-icon';
+      img.src = token.value;
+      img.alt = token.alt;
+      img.loading = 'lazy';
+      item.appendChild(img);
+    } else {
+      item.textContent = token.value;
+    }
+
+    const left = Math.random() * 100;
+    const size = 14 + Math.random() * 42;
+    const duration = 18 + Math.random() * 22;
+    const delay = -Math.random() * duration;
+    const driftStart = -20 + Math.random() * 40;
+    const driftEnd = -40 + Math.random() * 80;
+    const rotStart = -14 + Math.random() * 28;
+    const rotEnd = rotStart + (-20 + Math.random() * 40);
+
+    item.style.left = left + 'vw';
+    item.style.fontSize = size + 'px';
+    item.style.width = size + 'px';
+    item.style.height = size + 'px';
+    item.style.animationDuration = duration + 's';
+    item.style.animationDelay = delay + 's';
+    item.style.setProperty('--drift-start', driftStart + 'px');
+    item.style.setProperty('--drift-end', driftEnd + 'px');
+    item.style.setProperty('--rot-start', rotStart + 'deg');
+    item.style.setProperty('--rot-end', rotEnd + 'deg');
+
+    layer.appendChild(item);
+  }
+}
+
+function initHeroGearCluster() {
+  const hero = document.getElementById('hero');
+  if (!hero || hero.querySelector('.hero-gear-cluster')) return;
+
+  const cluster = document.createElement('button');
+  cluster.type = 'button';
+  cluster.className = 'hero-gear-cluster';
+  cluster.setAttribute('aria-label', 'Start gear animation');
+  cluster.setAttribute('title', 'Click to animate');
+  cluster.innerHTML =
+    '<span class="hero-gear gear-a"></span>' +
+    '<span class="hero-gear gear-b"></span>' +
+    '<span class="hero-gear gear-c"></span>';
+
+  cluster.addEventListener('click', () => {
+    cluster.classList.toggle('is-active');
+  });
+
+  hero.appendChild(cluster);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  initFloatingDocsBackground();
+  initHeroGearCluster();
   initFadeInObserver();
   initNavigation();
   initFaqSection();
@@ -944,8 +1237,65 @@ document.addEventListener('DOMContentLoaded', () => {
   loadProjects();
   loadDesignProjects();
   loadFooterImages();
+  initBlogsSection();
 
   initScrollTextOverflow();
 });
+
+function initResponsiveNavbar() {
+  const nav = document.querySelector("nav");
+  const hamburger = document.querySelector(".hamburger");
+  const navLinks = document.querySelector(".nav-links");
+  if (!nav || !hamburger || !navLinks) return;
+
+  function closeMenu() {
+    navLinks.classList.remove("nav-active");
+    hamburger.classList.remove("toggle");
+    hamburger.setAttribute("aria-expanded", "false");
+  }
+
+  function syncNavPanelSize() {
+    const navHeight = Math.ceil(nav.getBoundingClientRect().height);
+    document.documentElement.style.setProperty("--nav-height", navHeight + "px");
+
+    if (window.matchMedia("(max-width: 1200px)").matches) {
+      navLinks.style.top = navHeight + "px";
+      navLinks.style.height = "calc(100dvh - " + navHeight + "px)";
+    } else {
+      navLinks.style.top = "";
+      navLinks.style.height = "";
+      closeMenu();
+    }
+  }
+
+  if (!hamburger.hasAttribute("aria-expanded")) {
+    hamburger.setAttribute("aria-expanded", "false");
+  }
+
+  hamburger.addEventListener("click", () => {
+    const isOpen = navLinks.classList.contains("nav-active");
+    hamburger.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeMenu();
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!window.matchMedia("(max-width: 1200px)").matches) return;
+    if (!navLinks.classList.contains("nav-active")) return;
+
+    const clickedInsideNav = nav.contains(e.target);
+    if (!clickedInsideNav) closeMenu();
+  });
+
+  const relayout = () => syncNavPanelSize();
+  window.addEventListener("resize", relayout);
+  window.addEventListener("orientationchange", relayout);
+
+  syncNavPanelSize();
+}
+
+document.addEventListener("DOMContentLoaded", initResponsiveNavbar);
 
 }
