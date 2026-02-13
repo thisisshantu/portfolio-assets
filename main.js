@@ -405,6 +405,78 @@ function formatMonthYear(value) {
   return value;
 }
 
+const SECTION_PAGINATION_HANDLERS = {};
+
+function getSectionPageSize() {
+  if (window.matchMedia('(max-width: 640px)').matches) return 1;
+  if (window.matchMedia('(max-width: 1024px)').matches) return 2;
+  return 4;
+}
+
+function ensureSectionPagination(container, paginationId) {
+  if (!container) return null;
+
+  let pagination = document.getElementById(paginationId);
+  if (!pagination) {
+    pagination = document.createElement('div');
+    pagination.id = paginationId;
+    pagination.className = 'blog-pagination section-pagination';
+    container.insertAdjacentElement('afterend', pagination);
+  }
+
+  return pagination;
+}
+
+function applySectionPagination(container, paginationId, cards) {
+  if (!container) return;
+  const pagination = ensureSectionPagination(container, paginationId);
+  if (!pagination) return;
+
+  let currentPage = 1;
+
+  const renderPage = (page) => {
+    const pageSize = getSectionPageSize();
+    const totalPages = Math.max(1, Math.ceil(cards.length / pageSize));
+    currentPage = Math.min(Math.max(1, page), totalPages);
+
+    const start = (currentPage - 1) * pageSize;
+    const pageCards = cards.slice(start, start + pageSize);
+    container.innerHTML = pageCards.join('');
+
+    pagination.innerHTML = '';
+    if (cards.length <= pageSize) {
+      pagination.style.display = 'none';
+    } else {
+      pagination.style.display = 'flex';
+      for (let i = 1; i <= totalPages; i += 1) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'blog-page-btn section-page-btn' + (i === currentPage ? ' active' : '');
+        btn.textContent = String(i);
+        btn.addEventListener('click', () => renderPage(i));
+        pagination.appendChild(btn);
+      }
+    }
+
+    initScrollTextOverflow();
+  };
+
+  if (SECTION_PAGINATION_HANDLERS[paginationId]) {
+    window.removeEventListener('resize', SECTION_PAGINATION_HANDLERS[paginationId]);
+  }
+
+  let resizeTimer = null;
+  const handleResize = () => {
+    if (resizeTimer) window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(() => renderPage(currentPage), 120);
+  };
+
+  SECTION_PAGINATION_HANDLERS[paginationId] = handleResize;
+  window.addEventListener('resize', handleResize);
+
+  renderPage(1);
+}
+
 /* ===== Certifications Loader ===== */
 async function loadCertifications() {
   const url =
@@ -418,15 +490,18 @@ async function loadCertifications() {
   if (!container) return;
   container.innerHTML = '';
 
-  rows.forEach(row => {
+  const cards = [];
+
+  rows.slice(1).forEach(row => {
     const link = row.c[0]?.v;
     const image = row.c[1]?.v;
     const name = row.c[2]?.v;
     const org = row.c[3]?.v;
     const date = formatMonthYear(row.c[4]?.v);
     const id = row.c[5]?.v;
+    if (!name) return;
 
-    container.innerHTML += `
+    cards.push(`
       <a href="${link}" target="_blank" class="certification-card">
         <div class="cert-image">
           <img src="${image}" alt="${org} Logo" />
@@ -445,8 +520,10 @@ async function loadCertifications() {
           <div class="cert-id">Credential ID: ${id}</div>
         </div>
       </a>
-    `;
+    `);
   });
+
+  applySectionPagination(container, 'certifications-pagination', cards);
 }
 
 async function loadAboutSection() {
@@ -637,8 +714,12 @@ async function loadProjects() {
   const container = document.getElementById('projects-container');
   if (!container) return;
   container.innerHTML = '';
+  const cards = [];
 
-  rows.slice(1).forEach((row, index) => {
+  Object.keys(PROJECTS_DATA).forEach((key) => delete PROJECTS_DATA[key]);
+  let projectIndex = 0;
+
+  rows.slice(1).forEach((row) => {
     const project = {
       name: row.c[0]?.v,
       description: row.c[1]?.v,
@@ -651,12 +732,13 @@ async function loadProjects() {
 
     if (!project.name) return;
 
-    PROJECTS_DATA[index] = project;
+    const id = String(projectIndex);
+    PROJECTS_DATA[id] = project;
+    projectIndex += 1;
 
-    container.insertAdjacentHTML(
-      'beforeend',
+    cards.push(
       `
-      <div class="project-card" data-project-id="${index}">
+      <div class="project-card" data-project-id="${id}">
         <img src="${project.image}" alt="${project.name}" />
         <div class="project-info">
           <div class="icon">
@@ -669,6 +751,8 @@ async function loadProjects() {
       `
     );
   });
+
+  applySectionPagination(container, 'projects-pagination', cards);
 }
 
 /* ================================
@@ -749,6 +833,7 @@ async function loadDesignProjects() {
 
   const projectRows = parseGoogleResponse(projectRes).slice(1);
   const assetRows   = parseGoogleResponse(assetRes).slice(1);
+  Object.keys(DESIGN_PROJECTS).forEach((key) => delete DESIGN_PROJECTS[key]);
 
   // Store projects
   projectRows.forEach(row => {
@@ -783,10 +868,10 @@ async function loadDesignProjects() {
   const container = document.getElementById('design-container');
   if (!container) return;
   container.innerHTML = '';
+  const cards = [];
 
   Object.values(DESIGN_PROJECTS).forEach(project => {
-    container.insertAdjacentHTML(
-      'beforeend',
+    cards.push(
       `
       <div class="project-card" data-design-id="${project.id}">
         <img src="${project.image}" alt="${project.title}" />
@@ -799,6 +884,8 @@ async function loadDesignProjects() {
       `
     );
   });
+
+  applySectionPagination(container, 'design-pagination', cards);
 }
 
 /* ================================
