@@ -987,8 +987,12 @@ async function loadBlogs() {
       const colUrl = findCol(['url', 'link', 'post url', 'blog url'], 1);
       const colDate = findCol(['date', 'published', 'publish date'], 2);
       const colExcerpt = findCol(['excerpt', 'summary', 'description'], 3);
+      const hasHeaderRow =
+        headers.some((h) => ['title', 'blog title', 'post title'].some((k) => h === k || h.includes(k))) &&
+        headers.some((h) => ['url', 'link', 'post url', 'blog url'].some((k) => h === k || h.includes(k)));
+      const dataRows = rows.slice(hasHeaderRow ? 1 : 0);
 
-      rows.slice(1).forEach((row) => {
+      dataRows.forEach((row) => {
         const title = getCellValue(row?.c?.[colTitle]);
         let postUrl = getCellValue(row?.c?.[colUrl]);
         const date = getCellValue(row?.c?.[colDate]);
@@ -1017,6 +1021,13 @@ async function loadBlogs() {
     }
   }
 
+  // Show a visible fallback so the section never appears empty while debugging data issues.
+  container.innerHTML =
+    '<div class="blog-card">' +
+      '<h3>Blogs are being updated</h3>' +
+      '<p class="blog-meta">Data source not found</p>' +
+      '<p>Please verify the Google Sheet tab name and rows.</p>' +
+    '</div>';
   console.warn('Blogs could not be loaded. Check sheet tab name and sharing settings.');
   return false;
 }
