@@ -325,6 +325,26 @@ function resolveSectionTarget(target) {
   return document.getElementById(target) || document.querySelector(target);
 }
 
+const SECTION_HTML_CACHE_PREFIX = 'portfolio_section_html_v1:';
+
+function readSectionCache(cacheKey) {
+  if (!cacheKey) return null;
+  try {
+    return sessionStorage.getItem(SECTION_HTML_CACHE_PREFIX + cacheKey);
+  } catch (err) {
+    return null;
+  }
+}
+
+function writeSectionCache(cacheKey, html) {
+  if (!cacheKey) return;
+  try {
+    sessionStorage.setItem(SECTION_HTML_CACHE_PREFIX + cacheKey, html || '');
+  } catch (err) {
+    // ignore storage quota / privacy mode failures
+  }
+}
+
 function startSectionLoader(target, message) {
   const host = resolveSectionTarget(target);
   if (!host) return () => {};
@@ -367,9 +387,24 @@ function startSectionLoader(target, message) {
 }
 
 function runSectionLoad(target, label, loaderMessage, taskFn) {
-  const stop = startSectionLoader(target, loaderMessage || 'Loading...');
+  const host = resolveSectionTarget(target);
+  const cacheKey = label ? String(label).toLowerCase().replace(/\s+/g, '_') : '';
+  const cachedHtml = host ? readSectionCache(cacheKey) : null;
+  const hasCache = !!(cachedHtml && cachedHtml.trim());
+
+  if (host && hasCache) {
+    host.innerHTML = cachedHtml;
+    host.classList.remove('section-loading');
+  }
+
+  const stop = hasCache ? () => {} : startSectionLoader(target, loaderMessage || 'Loading...');
   Promise.resolve()
     .then(() => taskFn())
+    .then(() => {
+      const finalHost = resolveSectionTarget(target);
+      if (!finalHost || !cacheKey) return;
+      writeSectionCache(cacheKey, finalHost.innerHTML);
+    })
     .catch((err) => {
       console.error(`Failed to load ${label}:`, err);
     })
@@ -1194,7 +1229,24 @@ async function loadBlogs() {
   const requestId = ++blogsLoadRequestId;
   const container = getBlogsContainer();
   if (!container) return false;
-  const stopLoader = startSectionLoader(container, 'Loading blogs...');
+  const blogsCacheKey = 'blogs_section_bundle_v1';
+  const cachedBundleRaw = readSectionCache(blogsCacheKey);
+  let hasBlogsCache = false;
+  let cachedBundle = null;
+  if (cachedBundleRaw) {
+    try {
+      cachedBundle = JSON.parse(cachedBundleRaw);
+      if (cachedBundle && typeof cachedBundle === 'object') {
+        if (cachedBundle.containerHtml) {
+          container.innerHTML = cachedBundle.containerHtml;
+        }
+        hasBlogsCache = !!cachedBundle.containerHtml;
+      }
+    } catch (err) {
+      // ignore cache parse failures
+    }
+  }
+  const stopLoader = hasBlogsCache ? () => {} : startSectionLoader(container, 'Loading blogs...');
   let activePage = 1;
   let resizeTimer = null;
   let pagination = document.getElementById('blogs-pagination');
@@ -1203,6 +1255,10 @@ async function loadBlogs() {
     pagination.id = 'blogs-pagination';
     pagination.className = 'blog-pagination';
     container.insertAdjacentElement('afterend', pagination);
+  }
+  if (cachedBundle && cachedBundle.paginationHtml !== undefined) {
+    pagination.innerHTML = cachedBundle.paginationHtml || '';
+    pagination.style.display = cachedBundle.paginationDisplay || 'none';
   }
 
   const SHEET_NAMES = ['blogs'];
@@ -1318,6 +1374,11 @@ async function loadBlogs() {
         };
 
         renderPage(1);
+        writeSectionCache(blogsCacheKey, JSON.stringify({
+          containerHtml: container.innerHTML,
+          paginationHtml: pagination.innerHTML,
+          paginationDisplay: pagination.style.display || ''
+        }));
         if (blogsResizeHandler) {
           window.removeEventListener('resize', blogsResizeHandler);
         }
@@ -1346,6 +1407,11 @@ async function loadBlogs() {
       '<p class="blog-meta">Data source not found</p>' +
       '<p>Please verify the Google Sheet tab name and rows.</p>' +
     '</div>';
+  writeSectionCache(blogsCacheKey, JSON.stringify({
+    containerHtml: container.innerHTML,
+    paginationHtml: pagination ? pagination.innerHTML : '',
+    paginationDisplay: pagination ? (pagination.style.display || '') : ''
+  }));
   console.warn('Blogs could not be loaded. Check sheet tab name and sharing settings.');
   return false;
   } finally {
