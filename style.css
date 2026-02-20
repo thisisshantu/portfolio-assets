@@ -2611,6 +2611,66 @@ nav a.active-nav {
   }
 }
 
+/* === Unified Pagination Pattern (Prev / Pages / Ellipsis / Next) === */
+.blog-pagination,
+.section-pagination {
+  display: none;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 1.15rem;
+  flex-wrap: wrap;
+}
+
+.blog-page-btn,
+.section-page-btn {
+  width: 56px;
+  min-width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.blog-page-btn i,
+.section-page-btn i {
+  font-size: 1.05rem;
+}
+
+.blog-page-btn.page-nav-btn:disabled,
+.section-page-btn.page-nav-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.blog-page-btn.page-ellipsis,
+.section-page-btn.page-ellipsis {
+  pointer-events: none;
+  user-select: none;
+}
+
+@media (max-width: 640px) {
+  .blog-page-btn,
+  .section-page-btn {
+    width: 48px;
+    min-width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    font-size: 1.06rem;
+  }
+
+  .blog-pagination,
+  .section-pagination {
+    gap: 8px;
+  }
+}
+
 @media (max-width: 1199px) and (min-width: 900px) {
   #projects-container.project-grid,
   #design-container.project-grid {
