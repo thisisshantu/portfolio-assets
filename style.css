@@ -2646,6 +2646,13 @@ nav a.active-nav {
   letter-spacing: 0.01em;
 }
 
+/* Hero/About should never get full overlay masking while revalidating cached data. */
+#hero .section-loader,
+#about .section-loader,
+#about .about-content .section-loader {
+  display: none !important;
+}
+
 .section-loader-spinner {
   width: 20px;
   height: 20px;
