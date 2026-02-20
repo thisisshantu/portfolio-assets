@@ -260,13 +260,61 @@ if (exploreBtn) {
 // You can add more JS for interactivity as needed
 
 const PORTFOLIO_SHEET_ID = '1VYbIKHEgmpHljYLTTHoonE_IlARRpxudiQ_0QFKDRkU';
+const API_BASE = 'https://script.google.com/macros/s/AKfycbzQxsOgxS6Nqof7v9azreuRbq9npoI3zO99F8Npt5XsQBaTyAna8eTmzWi0Jeg0ImcAAQ/exec';
+
+// Endpoints exposed via Apps Script proxy.
+const API_PROXY_ENDPOINTS = new Set([
+  'hero',
+  'experience',
+  'education',
+  'about_intro',
+  'personal_info',
+  'technical_skills',
+  'soft_skills',
+  'certifications',
+  'projects',
+  'videos',
+  'testimonial',
+  'footer_images',
+  'design_projects',
+  'design_assets',
+  'blogs',
+  'seo'
+]);
 
 function getSheetUrl(sheetName) {
+  const key = String(sheetName || '').trim().toLowerCase();
+  if (API_PROXY_ENDPOINTS.has(key)) {
+    return `${API_BASE}?endpoint=${encodeURIComponent(key)}`;
+  }
   return `https://docs.google.com/spreadsheets/d/${PORTFOLIO_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
 }
 
 function parseGoogleResponse(text) {
-  const json = JSON.parse(text.substring(47).slice(0, -2));
+  const raw = String(text || '').trim();
+
+  // Apps Script proxy mode: {"ok":true,"data":[{...}]}
+  if (raw.startsWith('{') || raw.startsWith('[')) {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
+      const data = parsed.data;
+      if (data.length === 0) return [];
+
+      const headers = Object.keys(data[0]);
+      const headerRow = { c: headers.map((h) => ({ v: h })) };
+      const rows = data.map((obj) => ({
+        c: headers.map((h) => {
+          const v = obj[h] ?? '';
+          return { v, f: typeof v === 'string' ? v : undefined };
+        })
+      }));
+
+      return [headerRow, ...rows];
+    }
+  }
+
+  // Google gviz mode.
+  const json = JSON.parse(raw.substring(47).slice(0, -2));
   return json.table.rows;
 }
 
@@ -1098,7 +1146,7 @@ async function loadBlogs() {
     container.insertAdjacentElement('afterend', pagination);
   }
 
-  const SHEET_NAMES = ['blogs', 'Blogs', 'BLOGS', 'Sheet1', 'sheet1'];
+  const SHEET_NAMES = ['blogs'];
 
   const getCellValue = (cell) => {
     if (!cell) return '';
