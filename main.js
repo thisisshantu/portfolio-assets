@@ -329,7 +329,7 @@ async function loadExperience() {
   if (!container) return;
   container.innerHTML = '';
 
-  rows.forEach((row, index) => {
+  rows.slice(1).forEach((row, index) => {
     const start = row.c[0]?.v;
     const end = row.c[1]?.v;
     const title = row.c[2]?.v;
@@ -359,7 +359,7 @@ async function loadEducation() {
   if (!container) return;
   container.innerHTML = '';
 
-  rows.forEach((row, index) => {
+  rows.slice(1).forEach((row, index) => {
     const start = row.c[0]?.v;
     const end = row.c[1]?.v;
     const degree = row.c[2]?.v;
