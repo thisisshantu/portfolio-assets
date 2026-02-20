@@ -2927,3 +2927,34 @@ nav a.active-nav {
 .doc-float-item {
   opacity: 0.33 !important;
 }
+
+/* === Light-mode contrast fixes: Testimonials + Popups === */
+body:not([data-theme='dark']) .recommendation-card .user-name {
+  color: #2a3f57 !important;
+}
+
+body:not([data-theme='dark']) .recommendation-card .user-profile {
+  color: #4a6078 !important;
+}
+
+body:not([data-theme='dark']) .recommendation-card .recommendation-description {
+  color: #2f435a !important;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+body:not([data-theme='dark']) .project-popup .popup-content {
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.76) 0%, rgba(242, 248, 255, 0.66) 100%) !important;
+  border: 1px solid rgba(122, 156, 196, 0.35) !important;
+}
+
+body:not([data-theme='dark']) .project-popup h3,
+body:not([data-theme='dark']) .project-popup p,
+body:not([data-theme='dark']) .project-popup .popup-content strong,
+body:not([data-theme='dark']) .project-popup .popup-content span,
+body:not([data-theme='dark']) .project-popup .popup-content h4 {
+  color: #263a52 !important;
+}
+
+body:not([data-theme='dark']) .project-popup .popup-close {
+  color: #2c4058 !important;
+}
