@@ -2788,3 +2788,142 @@ nav a.active-nav {
   border-color: rgba(157, 202, 255, 0.32);
   color: #e9f2ff;
 }
+
+/* === 2026 polish pass: hierarchy, readability, rhythm, consistency === */
+
+/* 1) Hero scale */
+@media (min-width: 1200px) {
+  #hero {
+    min-height: 84vh;
+  }
+
+  #hero .hero-content {
+    max-width: 1220px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: clamp(34px, 4.2vw, 52px);
+  }
+
+  #hero .hero-left h1 {
+    font-size: clamp(3rem, 3.8vw, 4.35rem);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+  }
+
+  #hero .hero-left h3 {
+    font-size: clamp(1.15rem, 1.35vw, 1.4rem);
+    line-height: 1.45;
+  }
+}
+
+/* 2) Readability tuning for text-heavy cards */
+.resume-item .resume-title,
+.recommendation-card .user-name {
+  color: #f4f8ff;
+}
+
+.resume-item .institute,
+.resume-item p,
+.recommendation-card .user-profile,
+.recommendation-card .recommendation-description {
+  color: #d9e4f4;
+}
+
+[data-theme='dark'] .resume-item .resume-title,
+[data-theme='dark'] .recommendation-card .user-name {
+  color: #f6f9ff;
+}
+
+[data-theme='dark'] .resume-item .institute,
+[data-theme='dark'] .resume-item p,
+[data-theme='dark'] .recommendation-card .user-profile,
+[data-theme='dark'] .recommendation-card .recommendation-description {
+  color: #dee9f9;
+}
+
+/* 3) Vertical spacing rhythm */
+#about,
+#resume,
+#certifications-section,
+#projects,
+#videos,
+#design,
+#blogs,
+#testimonial {
+  padding-top: clamp(72px, 8vh, 112px);
+  padding-bottom: clamp(64px, 7vh, 96px);
+}
+
+/* 4) Card consistency and line clamping */
+#certifications-container.certification-grid,
+#projects-container.project-grid,
+#design-container.project-grid,
+#blogs-container.blog-grid,
+#blogs .blog-grid {
+  align-items: stretch !important;
+}
+
+#certifications-container .certification-card,
+#projects-container .project-card,
+#design-container .project-card,
+#blogs-container .blog-card,
+#blogs .blog-card {
+  height: 100%;
+}
+
+.project-card h3,
+.blog-card h3,
+.cert-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+}
+
+.project-card .project-info p,
+.blog-card .blog-excerpt {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+}
+
+/* 5) Pagination spacing refinement */
+.blog-pagination,
+.section-pagination {
+  margin-top: 0.9rem;
+}
+
+/* 6) CTA hierarchy */
+#hero .container-home .btn:first-of-type {
+  background: linear-gradient(150deg, rgba(76, 156, 255, 0.95) 0%, rgba(58, 126, 240, 0.9) 100%) !important;
+  border-color: rgba(166, 214, 255, 0.9) !important;
+  color: #f8fcff !important;
+}
+
+#hero #hero-resume.btn {
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0.13) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.56) !important;
+  color: #eef5ff !important;
+}
+
+/* 7) Contact block separation from busy photo background */
+.footer-overlay {
+  background:
+    linear-gradient(180deg, rgba(7, 13, 24, 0.62) 0%, rgba(6, 11, 20, 0.72) 100%),
+    radial-gradient(120% 100% at 50% 0%, rgba(109, 160, 233, 0.12) 0%, rgba(0, 0, 0, 0) 60%);
+}
+
+#contact .container {
+  background: linear-gradient(150deg, rgba(17, 29, 48, 0.5) 0%, rgba(14, 23, 39, 0.4) 100%);
+  border: 1px solid rgba(202, 227, 255, 0.28);
+  border-radius: 24px;
+  padding: clamp(20px, 3.2vw, 32px);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+}
+
+/* Slightly soften floating background icons behind content */
+.doc-float-item {
+  opacity: 0.33 !important;
+}
