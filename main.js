@@ -179,13 +179,28 @@ function initThemeToggle() {
   const darkModeToggle = document.getElementById('dark-mode-toggle');
   if (!darkModeToggle) return;
 
-  darkModeToggle.addEventListener('click', () => {
+  function updateThemeToggleIcon() {
+    const icon = darkModeToggle.querySelector('i');
+    if (!icon) return;
+
+    const isDark = document.body.classList.contains('dark-mode') || document.body.getAttribute('data-theme') === 'dark';
+    icon.classList.remove('fa-sun', 'fa-moon');
+    icon.classList.add(isDark ? 'fa-sun' : 'fa-moon');
+    darkModeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+    darkModeToggle.setAttribute('title', isDark ? 'Light mode' : 'Dark mode');
+  }
+
+  updateThemeToggleIcon();
+
+  darkModeToggle.addEventListener('click', (e) => {
+    e.preventDefault();
     document.body.classList.toggle('dark-mode');
     if (document.body.classList.contains('dark-mode')) {
       document.body.setAttribute('data-theme', 'dark');
     } else {
       document.body.removeAttribute('data-theme');
     }
+    updateThemeToggleIcon();
   });
 }
 
