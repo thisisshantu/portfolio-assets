@@ -381,7 +381,7 @@ function startSectionLoader(target, message) {
     host.style.minHeight = '140px';
   }
 
-  let loader = host.querySelector(':scope > .section-loader');
+  let loader = host.querySelector('.section-loader');
   if (!loader) {
     loader = document.createElement('div');
     loader.className = 'section-loader';
@@ -394,11 +394,23 @@ function startSectionLoader(target, message) {
   const textEl = loader.querySelector('.section-loader-text');
   if (textEl) textEl.textContent = message || 'Loading...';
 
-  return () => {
+  // Safety valve: never let a section loader stay forever.
+  const failSafeTimer = window.setTimeout(() => {
     const currentHost = resolveSectionTarget(target);
     if (!currentHost) return;
-    const currentLoader = currentHost.querySelector(':scope > .section-loader');
-    if (currentLoader) currentLoader.remove();
+    currentHost.querySelectorAll('.section-loader').forEach((el) => el.remove());
+    currentHost.classList.remove('section-loading');
+    if (currentHost.dataset && currentHost.dataset.loaderPrevMinHeight !== undefined) {
+      currentHost.style.minHeight = currentHost.dataset.loaderPrevMinHeight;
+      delete currentHost.dataset.loaderPrevMinHeight;
+    }
+  }, 15000);
+
+  return () => {
+    window.clearTimeout(failSafeTimer);
+    const currentHost = resolveSectionTarget(target);
+    if (!currentHost) return;
+    currentHost.querySelectorAll('.section-loader').forEach((el) => el.remove());
     currentHost.classList.remove('section-loading');
 
     const prevMinHeight = currentHost.dataset.loaderPrevMinHeight;
@@ -409,6 +421,17 @@ function startSectionLoader(target, message) {
   };
 }
 
+function clearStaleSectionLoaders() {
+  document.querySelectorAll('.section-loader').forEach((el) => el.remove());
+  document.querySelectorAll('.section-loading').forEach((el) => {
+    el.classList.remove('section-loading');
+    if (el.dataset && el.dataset.loaderPrevMinHeight !== undefined) {
+      el.style.minHeight = el.dataset.loaderPrevMinHeight;
+      delete el.dataset.loaderPrevMinHeight;
+    }
+  });
+}
+
 function runSectionLoad(target, label, loaderMessage, taskFn) {
   const host = resolveSectionTarget(target);
   const cacheKey = label ? String(label).toLowerCase().replace(/\s+/g, '_') : '';
@@ -417,12 +440,25 @@ function runSectionLoad(target, label, loaderMessage, taskFn) {
 
   if (host && hasCache) {
     host.innerHTML = cachedHtml;
+    host.querySelectorAll('.section-loader').forEach((el) => el.remove());
     host.classList.remove('section-loading');
+    if (host.dataset.loaderPrevMinHeight !== undefined) {
+      host.style.minHeight = host.dataset.loaderPrevMinHeight;
+      delete host.dataset.loaderPrevMinHeight;
+    }
   }
 
   const isHero = cacheKey === 'hero';
-  const stopInlineLoader = hasCache ? () => {} : startSectionLoader(target, loaderMessage || 'Loading...');
-  const stopTopBadge = hasCache && isHero ? startTopRefreshBadge('Refreshing hero...') : () => {};
+  const isAbout = cacheKey === 'about';
+
+  // Hero/About should not be masked by a full overlay loader.
+  const allowInlineLoader = !isHero && !isAbout;
+  const stopInlineLoader = hasCache || !allowInlineLoader
+    ? () => {}
+    : startSectionLoader(target, loaderMessage || 'Loading...');
+  const stopTopBadge = isHero
+    ? startTopRefreshBadge(hasCache ? 'Refreshing hero...' : 'Loading hero...')
+    : () => {};
 
   Promise.resolve()
     .then(() => taskFn())
@@ -1573,6 +1609,7 @@ function initHeroGearCluster() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  clearStaleSectionLoaders();
   initFloatingDocsBackground();
   initHeroGearCluster();
   initResponsiveNavbar();
