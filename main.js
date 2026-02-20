@@ -760,6 +760,76 @@ function getResponsiveItemsPerPage() {
 
 const sectionResizeHandlers = {};
 
+function getPaginationTokens(totalPages, activePage) {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, idx) => idx + 1);
+  }
+
+  if (activePage <= 3) {
+    return [1, 2, 3, 'ellipsis', totalPages];
+  }
+
+  if (activePage >= totalPages - 2) {
+    return [1, 'ellipsis', totalPages - 2, totalPages - 1, totalPages];
+  }
+
+  return [1, 'ellipsis', activePage - 1, activePage, activePage + 1, 'ellipsis', totalPages];
+}
+
+function renderPaginationControls(pagination, totalPages, activePage, onPageSelect) {
+  if (!pagination) return;
+  pagination.innerHTML = '';
+
+  if (totalPages <= 1) {
+    pagination.style.display = 'none';
+    return;
+  }
+
+  pagination.style.display = 'flex';
+
+  const prevBtn = document.createElement('button');
+  prevBtn.type = 'button';
+  prevBtn.className = 'blog-page-btn section-page-btn page-nav-btn';
+  prevBtn.setAttribute('aria-label', 'Previous page');
+  prevBtn.disabled = activePage === 1;
+  prevBtn.innerHTML = '<i class="fa-solid fa-chevron-left" aria-hidden="true"></i>';
+  prevBtn.addEventListener('click', () => {
+    if (activePage > 1) onPageSelect(activePage - 1);
+  });
+  pagination.appendChild(prevBtn);
+
+  const tokens = getPaginationTokens(totalPages, activePage);
+  tokens.forEach((token) => {
+    if (token === 'ellipsis') {
+      const ellipsis = document.createElement('span');
+      ellipsis.className = 'blog-page-btn section-page-btn page-ellipsis';
+      ellipsis.textContent = '...';
+      pagination.appendChild(ellipsis);
+      return;
+    }
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'blog-page-btn section-page-btn' + (token === activePage ? ' active' : '');
+    btn.textContent = String(token);
+    btn.setAttribute('aria-label', `Page ${token}`);
+    btn.setAttribute('aria-current', token === activePage ? 'page' : 'false');
+    btn.addEventListener('click', () => onPageSelect(token));
+    pagination.appendChild(btn);
+  });
+
+  const nextBtn = document.createElement('button');
+  nextBtn.type = 'button';
+  nextBtn.className = 'blog-page-btn section-page-btn page-nav-btn';
+  nextBtn.setAttribute('aria-label', 'Next page');
+  nextBtn.disabled = activePage === totalPages;
+  nextBtn.innerHTML = '<i class="fa-solid fa-chevron-right" aria-hidden="true"></i>';
+  nextBtn.addEventListener('click', () => {
+    if (activePage < totalPages) onPageSelect(activePage + 1);
+  });
+  pagination.appendChild(nextBtn);
+}
+
 function applySectionPagination(container, paginationId, cards) {
   if (!container) return;
   const pagination = ensureSectionPagination(container, paginationId);
@@ -777,20 +847,7 @@ function applySectionPagination(container, paginationId, cards) {
     container.innerHTML = '';
     container.insertAdjacentHTML('beforeend', pageCards.join(''));
 
-    pagination.innerHTML = '';
-    if (totalPages <= 1) {
-      pagination.style.display = 'none';
-    } else {
-      pagination.style.display = 'flex';
-      for (let i = 1; i <= totalPages; i += 1) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'blog-page-btn section-page-btn' + (i === activePage ? ' active' : '');
-        btn.textContent = String(i);
-        btn.addEventListener('click', () => renderPage(i));
-        pagination.appendChild(btn);
-      }
-    }
+    renderPaginationControls(pagination, totalPages, activePage, renderPage);
 
     initScrollTextOverflow();
   };
@@ -1457,21 +1514,7 @@ async function loadBlogs() {
           container.innerHTML = '';
           container.insertAdjacentHTML('beforeend', pageCards.join(''));
 
-          pagination.innerHTML = '';
-          if (totalPages <= 1) {
-            pagination.style.display = 'none';
-            return;
-          }
-
-          pagination.style.display = 'flex';
-          for (let i = 1; i <= totalPages; i += 1) {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'blog-page-btn' + (i === activePage ? ' active' : '');
-            btn.textContent = String(i);
-            btn.addEventListener('click', () => renderPage(i));
-            pagination.appendChild(btn);
-          }
+          renderPaginationControls(pagination, totalPages, activePage, renderPage);
         };
 
         renderPage(1);
