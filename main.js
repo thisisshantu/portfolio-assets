@@ -367,6 +367,104 @@ async function loadHeroSection() {
   if (heroImage) heroImage.src = heroData.profile_image;
 }
 
+function upsertMetaByName(name, content) {
+  if (!name || !content) return;
+  let tag = document.querySelector(`meta[name="${name}"]`);
+  if (!tag) {
+    tag = document.createElement('meta');
+    tag.setAttribute('name', name);
+    document.head.appendChild(tag);
+  }
+  tag.setAttribute('content', content);
+}
+
+function upsertMetaByProperty(property, content) {
+  if (!property || !content) return;
+  let tag = document.querySelector(`meta[property="${property}"]`);
+  if (!tag) {
+    tag = document.createElement('meta');
+    tag.setAttribute('property', property);
+    document.head.appendChild(tag);
+  }
+  tag.setAttribute('content', content);
+}
+
+function upsertCanonical(url) {
+  if (!url) return;
+  let link = document.querySelector('link[rel="canonical"]');
+  if (!link) {
+    link = document.createElement('link');
+    link.setAttribute('rel', 'canonical');
+    document.head.appendChild(link);
+  }
+  link.setAttribute('href', url);
+}
+
+async function loadSeoMetadata() {
+  const url = getSheetUrl('seo');
+  const response = await fetch(url);
+  const text = await response.text();
+  const rows = parseGoogleResponse(text);
+  if (!rows || rows.length === 0) return;
+
+  const getVal = (cell) => {
+    if (!cell) return '';
+    if (cell.v !== undefined && cell.v !== null) return String(cell.v).trim();
+    if (cell.f !== undefined && cell.f !== null) return String(cell.f).trim();
+    return '';
+  };
+
+  const header = (rows[0]?.c || []).map((c) => getVal(c).toLowerCase());
+  const hasHeader = header.includes('page_key');
+  const dataRows = rows.slice(hasHeader ? 1 : 0);
+
+  const findCol = (aliases, fallbackIndex) => {
+    const idx = header.findIndex((h) => aliases.some((a) => h === a || h.includes(a)));
+    return idx >= 0 ? idx : fallbackIndex;
+  };
+
+  const colPageKey = findCol(['page_key', 'page key', 'key'], 0);
+  const colTitle = findCol(['title', 'meta title'], 1);
+  const colDescription = findCol(['meta_description', 'meta description', 'description'], 2);
+  const colThumb = findCol(['thumbnail_url', 'thumbnail url', 'og image', 'image'], 3);
+  const colOgType = findCol(['og_type', 'og type', 'type'], 4);
+  const colTwitterCard = findCol(['twitter_card', 'twitter card'], 5);
+
+  const pageKey =
+    document.body?.getAttribute('data-page-key') ||
+    document.querySelector('meta[name="page_key"]')?.getAttribute('content') ||
+    'portfolio_home';
+
+  const row =
+    dataRows.find((r) => getVal(r?.c?.[colPageKey]) === pageKey) ||
+    dataRows.find((r) => getVal(r?.c?.[colPageKey]) === 'portfolio_home') ||
+    dataRows[0];
+
+  if (!row) return;
+
+  const title = getVal(row.c?.[colTitle]);
+  const description = getVal(row.c?.[colDescription]);
+  const thumbnailUrl = getVal(row.c?.[colThumb]);
+  const ogType = getVal(row.c?.[colOgType]) || 'website';
+  const twitterCard = getVal(row.c?.[colTwitterCard]) || 'summary_large_image';
+  const cleanUrl = window.location.href.split('#')[0];
+
+  if (title) document.title = title;
+  if (description) upsertMetaByName('description', description);
+
+  upsertCanonical(cleanUrl);
+  if (title) upsertMetaByProperty('og:title', title);
+  if (description) upsertMetaByProperty('og:description', description);
+  if (thumbnailUrl) upsertMetaByProperty('og:image', thumbnailUrl);
+  upsertMetaByProperty('og:url', cleanUrl);
+  upsertMetaByProperty('og:type', ogType);
+
+  upsertMetaByName('twitter:card', twitterCard);
+  if (title) upsertMetaByName('twitter:title', title);
+  if (description) upsertMetaByName('twitter:description', description);
+  if (thumbnailUrl) upsertMetaByName('twitter:image', thumbnailUrl);
+}
+
 /* ===== Date Formatter (Handles Google Date format) ===== */
 function formatMonthYear(value) {
   if (!value) return '';
@@ -1272,6 +1370,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initFaqSection();
   initIframePlaceholders();
   initThemeToggle();
+
+  loadSeoMetadata().catch((err) => {
+    console.error('SEO metadata load failed:', err);
+  });
 
   loadExperience();
   loadEducation();
