@@ -345,6 +345,29 @@ function writeSectionCache(cacheKey, html) {
   }
 }
 
+function startTopRefreshBadge(message) {
+  let badge = document.getElementById('top-refresh-loader');
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.id = 'top-refresh-loader';
+    badge.className = 'top-refresh-loader';
+    badge.innerHTML =
+      '<span class="section-loader-spinner" aria-hidden="true"></span>' +
+      '<span class="top-refresh-loader-text"></span>';
+    document.body.appendChild(badge);
+  }
+
+  const textEl = badge.querySelector('.top-refresh-loader-text');
+  if (textEl) textEl.textContent = message || 'Syncing...';
+  badge.classList.add('active');
+
+  return () => {
+    const current = document.getElementById('top-refresh-loader');
+    if (!current) return;
+    current.classList.remove('active');
+  };
+}
+
 function startSectionLoader(target, message) {
   const host = resolveSectionTarget(target);
   if (!host) return () => {};
@@ -397,18 +420,27 @@ function runSectionLoad(target, label, loaderMessage, taskFn) {
     host.classList.remove('section-loading');
   }
 
-  const stop = hasCache ? () => {} : startSectionLoader(target, loaderMessage || 'Loading...');
+  const isHero = cacheKey === 'hero';
+  const stopInlineLoader = hasCache ? () => {} : startSectionLoader(target, loaderMessage || 'Loading...');
+  const stopTopBadge = hasCache && isHero ? startTopRefreshBadge('Refreshing hero...') : () => {};
+
   Promise.resolve()
     .then(() => taskFn())
     .then(() => {
       const finalHost = resolveSectionTarget(target);
       if (!finalHost || !cacheKey) return;
-      writeSectionCache(cacheKey, finalHost.innerHTML);
+
+      const snapshot = finalHost.cloneNode(true);
+      snapshot.querySelectorAll('.section-loader').forEach((el) => el.remove());
+      writeSectionCache(cacheKey, snapshot.innerHTML);
     })
     .catch((err) => {
       console.error(`Failed to load ${label}:`, err);
     })
-    .finally(() => stop());
+    .finally(() => {
+      stopInlineLoader();
+      stopTopBadge();
+    });
 }
 
 async function loadExperience() {
