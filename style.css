@@ -999,7 +999,7 @@ input[type="submit"]:hover {
 .project-popup .popup-content {
   position: relative;
   background: var(--card);
-  color: var(--text);
+  color: #22364d;
   width: 90%;
   max-width: 760px;
   max-height: 80vh;
@@ -1009,7 +1009,8 @@ input[type="submit"]:hover {
   z-index: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   animation: popupFadeIn 0.35s ease;
 }
 
@@ -1038,19 +1039,24 @@ input[type="submit"]:hover {
   border-radius: 12px;
   margin-bottom: 16px;
   flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.85);
 }
 
 .project-popup h3 {
   font-size: 1.8rem;
   font-weight: 600;
   margin-bottom: 10px;
-  color: var(--secondary);
+  color: #22364d;
 }
 
 .project-popup p {
   font-size: 1rem;
   line-height: 1.7;
   margin-bottom: 12px;
+  color: #2f465f;
 }
 
 .project-popup a {
@@ -1076,10 +1082,44 @@ input[type="submit"]:hover {
 
 [data-theme="dark"] .project-popup .popup-content {
   box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6);
+  color: #eef4ff;
 }
 
 [data-theme="dark"] .project-popup h3 {
   color: #fff;
+}
+
+[data-theme="dark"] .project-popup p {
+  color: rgba(232, 241, 255, 0.92);
+}
+
+[data-theme="dark"] .project-popup img {
+  background: rgba(16, 27, 44, 0.86);
+}
+
+.project-popup .popup-content strong,
+.project-popup .popup-content span,
+.project-popup .popup-content h4 {
+  color: #22364d;
+}
+
+[data-theme="dark"] .project-popup .popup-content strong,
+[data-theme="dark"] .project-popup .popup-content span,
+[data-theme="dark"] .project-popup .popup-content h4 {
+  color: #f1f6ff;
+}
+
+.project-popup .popup-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.project-popup .popup-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 180, 0, 0.85);
+  border-radius: 10px;
+}
+
+.project-popup .popup-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.08);
 }
 
 #design-assets {
@@ -2525,5 +2565,61 @@ nav a.active-nav {
   #blog-container.blog-grid,
   #blogs .blog-grid {
     grid-template-columns: 1fr !important;
+  }
+}
+
+/* === Responsive Pagination + Grid Alignment Fix (Portfolio / Design) === */
+#projects-pagination,
+#design-pagination,
+.section-pagination {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 12px;
+  margin-left: auto;
+  margin-right: auto;
+  justify-content: center !important;
+}
+
+#projects-container.project-grid,
+#design-container.project-grid {
+  justify-content: center !important;
+  align-items: stretch;
+  gap: 24px;
+}
+
+#projects-container .project-card,
+#design-container .project-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+@media (min-width: 1200px) {
+  #projects-container.project-grid,
+  #design-container.project-grid {
+    grid-template-columns: repeat(4, minmax(0, 280px)) !important;
+  }
+}
+
+@media (max-width: 1199px) and (min-width: 900px) {
+  #projects-container.project-grid,
+  #design-container.project-grid {
+    grid-template-columns: repeat(3, minmax(0, 250px)) !important;
+  }
+}
+
+@media (max-width: 899px) and (min-width: 640px) {
+  #projects-container.project-grid,
+  #design-container.project-grid {
+    grid-template-columns: repeat(2, minmax(0, 230px)) !important;
+    gap: 18px;
+  }
+}
+
+@media (max-width: 639px) {
+  #projects-container.project-grid,
+  #design-container.project-grid {
+    grid-template-columns: minmax(0, 340px) !important;
+    justify-content: center !important;
   }
 }
