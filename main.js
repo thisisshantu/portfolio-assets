@@ -459,6 +459,24 @@ function runSectionLoad(target, label, loaderMessage, taskFn) {
   const stopTopBadge = isHero
     ? startTopRefreshBadge(hasCache ? 'Refreshing hero...' : 'Loading hero...')
     : () => {};
+  let didCleanup = false;
+  const cleanup = () => {
+    if (didCleanup) return;
+    didCleanup = true;
+    stopInlineLoader();
+    stopTopBadge();
+
+    const finalHost = resolveSectionTarget(target);
+    if (!finalHost) return;
+
+    finalHost.querySelectorAll('.section-loader').forEach((el) => el.remove());
+    finalHost.classList.remove('section-loading');
+    if (finalHost.dataset && finalHost.dataset.loaderPrevMinHeight !== undefined) {
+      finalHost.style.minHeight = finalHost.dataset.loaderPrevMinHeight;
+      delete finalHost.dataset.loaderPrevMinHeight;
+    }
+  };
+  const hardStopTimer = window.setTimeout(cleanup, 15000);
 
   Promise.resolve()
     .then(() => taskFn())
@@ -474,8 +492,8 @@ function runSectionLoad(target, label, loaderMessage, taskFn) {
       console.error(`Failed to load ${label}:`, err);
     })
     .finally(() => {
-      stopInlineLoader();
-      stopTopBadge();
+      window.clearTimeout(hardStopTimer);
+      cleanup();
     });
 }
 
