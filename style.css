@@ -1696,45 +1696,6 @@ nav {
   }
 }
 
-.blog-pagination {
-  display: none;
-  justify-content: center;
-  gap: 0.45rem;
-  margin-top: 1rem;
-  flex-wrap: wrap;
-}
-
-.section-pagination {
-  margin-top: 1.2rem;
-}
-
-.blog-page-btn {
-  min-width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  background: var(--card);
-  color: var(--text);
-  font-weight: 620;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.blog-page-btn:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
-.blog-page-btn.active {
-  border-color: var(--primary);
-  background: var(--primary);
-  color: #fff;
-}
-
-[data-theme="dark"] .blog-page-btn {
-  border-color: rgba(255, 255, 255, 0.25);
-}
-
 [data-theme='dark'] body {
   color: #eef2f8;
 }
@@ -2871,22 +2832,6 @@ nav a.active-nav {
   background: linear-gradient(150deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0.13) 100%) !important;
   border-color: rgba(255, 255, 255, 0.56) !important;
   color: #eef5ff !important;
-}
-
-/* 7) Contact block separation from busy photo background */
-.footer-overlay {
-  background:
-    linear-gradient(180deg, rgba(7, 13, 24, 0.62) 0%, rgba(6, 11, 20, 0.72) 100%),
-    radial-gradient(120% 100% at 50% 0%, rgba(109, 160, 233, 0.12) 0%, rgba(0, 0, 0, 0) 60%);
-}
-
-#contact .container {
-  background: linear-gradient(150deg, rgba(17, 29, 48, 0.5) 0%, rgba(14, 23, 39, 0.4) 100%);
-  border: 1px solid rgba(202, 227, 255, 0.28);
-  border-radius: 24px;
-  padding: clamp(20px, 3.2vw, 32px);
-  backdrop-filter: blur(12px) saturate(140%);
-  -webkit-backdrop-filter: blur(12px) saturate(140%);
 }
 
 /* Slightly soften floating background icons behind content */
