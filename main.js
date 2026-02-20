@@ -340,6 +340,18 @@ function resolveSectionTarget(target) {
   return document.getElementById(target) || document.querySelector(target);
 }
 
+function clearSectionLoadingState(target) {
+  const host = resolveSectionTarget(target);
+  if (!host) return;
+
+  host.querySelectorAll('.section-loader').forEach((el) => el.remove());
+  host.classList.remove('section-loading');
+  if (host.dataset && host.dataset.loaderPrevMinHeight !== undefined) {
+    host.style.minHeight = host.dataset.loaderPrevMinHeight;
+    delete host.dataset.loaderPrevMinHeight;
+  }
+}
+
 const SECTION_HTML_CACHE_PREFIX = 'portfolio_section_html_v1:';
 
 function readSectionCache(cacheKey) {
@@ -411,39 +423,19 @@ function startSectionLoader(target, message) {
 
   // Safety valve: never let a section loader stay forever.
   const failSafeTimer = window.setTimeout(() => {
-    const currentHost = resolveSectionTarget(target);
-    if (!currentHost) return;
-    currentHost.querySelectorAll('.section-loader').forEach((el) => el.remove());
-    currentHost.classList.remove('section-loading');
-    if (currentHost.dataset && currentHost.dataset.loaderPrevMinHeight !== undefined) {
-      currentHost.style.minHeight = currentHost.dataset.loaderPrevMinHeight;
-      delete currentHost.dataset.loaderPrevMinHeight;
-    }
+    clearSectionLoadingState(target);
   }, 15000);
 
   return () => {
     window.clearTimeout(failSafeTimer);
-    const currentHost = resolveSectionTarget(target);
-    if (!currentHost) return;
-    currentHost.querySelectorAll('.section-loader').forEach((el) => el.remove());
-    currentHost.classList.remove('section-loading');
-
-    const prevMinHeight = currentHost.dataset.loaderPrevMinHeight;
-    if (prevMinHeight !== undefined) {
-      currentHost.style.minHeight = prevMinHeight;
-      delete currentHost.dataset.loaderPrevMinHeight;
-    }
+    clearSectionLoadingState(target);
   };
 }
 
 function clearStaleSectionLoaders() {
-  document.querySelectorAll('.section-loader').forEach((el) => el.remove());
-  document.querySelectorAll('.section-loading').forEach((el) => {
-    el.classList.remove('section-loading');
-    if (el.dataset && el.dataset.loaderPrevMinHeight !== undefined) {
-      el.style.minHeight = el.dataset.loaderPrevMinHeight;
-      delete el.dataset.loaderPrevMinHeight;
-    }
+  document.querySelectorAll('.section-loading, .section-loader').forEach((el) => {
+    const host = el.classList.contains('section-loading') ? el : el.closest('.section-loading') || el.parentElement;
+    if (host) clearSectionLoadingState(host);
   });
 }
 
@@ -455,12 +447,7 @@ function runSectionLoad(target, label, loaderMessage, taskFn) {
 
   if (host && hasCache) {
     host.innerHTML = cachedHtml;
-    host.querySelectorAll('.section-loader').forEach((el) => el.remove());
-    host.classList.remove('section-loading');
-    if (host.dataset.loaderPrevMinHeight !== undefined) {
-      host.style.minHeight = host.dataset.loaderPrevMinHeight;
-      delete host.dataset.loaderPrevMinHeight;
-    }
+    clearSectionLoadingState(host);
   }
 
   const isHero = cacheKey === 'hero';
@@ -483,13 +470,7 @@ function runSectionLoad(target, label, loaderMessage, taskFn) {
 
     const finalHost = resolveSectionTarget(target);
     if (!finalHost) return;
-
-    finalHost.querySelectorAll('.section-loader').forEach((el) => el.remove());
-    finalHost.classList.remove('section-loading');
-    if (finalHost.dataset && finalHost.dataset.loaderPrevMinHeight !== undefined) {
-      finalHost.style.minHeight = finalHost.dataset.loaderPrevMinHeight;
-      delete finalHost.dataset.loaderPrevMinHeight;
-    }
+    clearSectionLoadingState(finalHost);
   };
   const hardStopTimer = window.setTimeout(cleanup, 15000);
 
@@ -512,63 +493,61 @@ function runSectionLoad(target, label, loaderMessage, taskFn) {
     });
 }
 
-async function loadExperience() {
-  const url = getSheetUrl('Experience');
+async function loadTimelineSection(config) {
+  const {
+    sheet,
+    containerId,
+    titleColumn,
+    instituteColumn,
+    animationClass
+  } = config;
 
-  const response = await fetch(url);
+  const response = await fetch(getSheetUrl(sheet));
   const text = await response.text();
   const rows = parseGoogleResponse(text);
 
-  const container = document.getElementById('experience-container');
+  const container = document.getElementById(containerId);
   if (!container) return;
   container.innerHTML = '';
 
-  rows.slice(1).forEach((row, index) => {
+  const cards = rows.slice(1).map((row, index) => {
     const start = row.c[0]?.v;
     const end = row.c[1]?.v;
-    const title = row.c[2]?.v;
-    const company = row.c[3]?.v;
+    const title = row.c[titleColumn]?.v;
+    const institute = row.c[instituteColumn]?.v;
     const location = row.c[4]?.v;
     const description = row.c[5]?.v;
 
-    container.innerHTML += `
-      <div class="resume-item wow fadeInLeft" data-wow-delay="0.${index + 3}s">
+    return `
+      <div class="resume-item wow ${animationClass}" data-wow-delay="0.${index + 3}s">
         <div class="time">${start} - ${end}</div>
         <h3 class="resume-title">${title}</h3>
-        <div class="institute">${company}, ${location}</div>
-        <p>${description}</p>
-      </div>
-    `;
-  });
-}
-
-async function loadEducation() {
-  const url = getSheetUrl('Education');
-
-  const response = await fetch(url);
-  const text = await response.text();
-  const rows = parseGoogleResponse(text);
-
-  const container = document.getElementById('education-container');
-  if (!container) return;
-  container.innerHTML = '';
-
-  rows.slice(1).forEach((row, index) => {
-    const start = row.c[0]?.v;
-    const end = row.c[1]?.v;
-    const degree = row.c[2]?.v;
-    const institute = row.c[3]?.v;
-    const location = row.c[4]?.v;
-    const description = row.c[5]?.v;
-
-    container.innerHTML += `
-      <div class="resume-item wow fadeInRight" data-wow-delay="0.${index + 3}s">
-        <div class="time">${start} - ${end}</div>
-        <h3 class="resume-title">${degree}</h3>
         <div class="institute">${institute}, ${location}</div>
         <p>${description}</p>
       </div>
     `;
+  });
+
+  container.insertAdjacentHTML('beforeend', cards.join(''));
+}
+
+async function loadExperience() {
+  await loadTimelineSection({
+    sheet: 'Experience',
+    containerId: 'experience-container',
+    titleColumn: 2,
+    instituteColumn: 3,
+    animationClass: 'fadeInLeft'
+  });
+}
+
+async function loadEducation() {
+  await loadTimelineSection({
+    sheet: 'Education',
+    containerId: 'education-container',
+    titleColumn: 2,
+    instituteColumn: 3,
+    animationClass: 'fadeInRight'
   });
 }
 
@@ -584,29 +563,27 @@ async function loadHeroSection() {
     heroData[row.c[0]?.v] = row.c[1]?.v;
   });
 
-  // Text
-  const availability = document.getElementById('hero-availability');
-  const headline = document.getElementById('hero-headline');
-  const subheadline = document.getElementById('hero-subheadline');
-  if (availability) availability.textContent = heroData.availability;
-  if (headline) headline.textContent = heroData.headline;
-  if (subheadline) subheadline.textContent = heroData.subheadline;
+  const setText = (id, value) => {
+    const el = document.getElementById(id);
+    if (el && value !== undefined && value !== null) el.textContent = value;
+  };
+  const setHref = (id, value) => {
+    const el = document.getElementById(id);
+    if (el && value) el.href = value;
+  };
 
-  // Links
-  const linkedin = document.getElementById('hero-linkedin');
-  const facebook = document.getElementById('hero-facebook');
-  const instagram = document.getElementById('hero-instagram');
-  const whatsapp = document.getElementById('hero-whatsapp');
-  const resume = document.getElementById('hero-resume');
-  if (linkedin) linkedin.href = heroData.linkedin;
-  if (facebook) facebook.href = heroData.facebook;
-  if (instagram) instagram.href = heroData.instagram;
-  if (whatsapp) whatsapp.href = heroData.whatsapp;
-  if (resume) resume.href = heroData.resume;
+  setText('hero-availability', heroData.availability);
+  setText('hero-headline', heroData.headline);
+  setText('hero-subheadline', heroData.subheadline);
 
-  // Image
+  setHref('hero-linkedin', heroData.linkedin);
+  setHref('hero-facebook', heroData.facebook);
+  setHref('hero-instagram', heroData.instagram);
+  setHref('hero-whatsapp', heroData.whatsapp);
+  setHref('hero-resume', heroData.resume);
+
   const heroImage = document.getElementById('hero-profile-image');
-  if (heroImage) heroImage.src = heroData.profile_image;
+  if (heroImage && heroData.profile_image) heroImage.src = heroData.profile_image;
 }
 
 function upsertMetaByName(name, content) {
@@ -921,6 +898,30 @@ async function loadAboutSection() {
     return parseGoogleResponse(text);
   }
 
+  function renderSkills(container, rows) {
+    if (!container) return;
+    container.innerHTML = '';
+
+    rows.slice(1).forEach((row) => {
+      const name = row.c[0]?.v;
+      const image = row.c[1]?.v;
+      const percent = row.c[2]?.v;
+      if (!name || !percent) return;
+
+      container.insertAdjacentHTML(
+        'beforeend',
+        `
+        <div class="skill-item">
+          <div class="skill-circle" style="--percent:${percent}%" data-percent="${percent}%">
+            <img src="${image}" alt="${name}" />
+          </div>
+          <span>${name}</span>
+        </div>
+        `
+      );
+    });
+  }
+
   /* ===== About Intro (skip header row) ===== */
   const introRows = await fetchSheet('about_intro');
   const introEl = document.getElementById('about-intro');
@@ -950,56 +951,12 @@ async function loadAboutSection() {
   /* ===== Technical Skills (skip header row) ===== */
   const techRows = await fetchSheet('technical_skills');
   const techContainer = document.getElementById('technical-skills-container');
-
-  if (techContainer) {
-    techContainer.innerHTML = '';
-
-    techRows.slice(1).forEach(row => {
-      const name = row.c[0]?.v;
-      const image = row.c[1]?.v;
-      const percent = row.c[2]?.v;
-      if (!name || !percent) return;
-
-      techContainer.insertAdjacentHTML(
-        'beforeend',
-        `
-        <div class="skill-item">
-          <div class="skill-circle" style="--percent:${percent}%" data-percent="${percent}%">
-            <img src="${image}" alt="${name}" />
-          </div>
-          <span>${name}</span>
-        </div>
-        `
-      );
-    });
-  }
+  renderSkills(techContainer, techRows);
 
   /* ===== Soft Skills (skip header row) ===== */
   const softRows = await fetchSheet('soft_skills');
   const softContainer = document.getElementById('soft-skills-container');
-
-  if (softContainer) {
-    softContainer.innerHTML = '';
-
-    softRows.slice(1).forEach(row => {
-      const name = row.c[0]?.v;
-      const image = row.c[1]?.v;
-      const percent = row.c[2]?.v;
-      if (!name || !percent) return;
-
-      softContainer.insertAdjacentHTML(
-        'beforeend',
-        `
-        <div class="skill-item">
-          <div class="skill-circle" style="--percent:${percent}%" data-percent="${percent}%">
-            <img src="${image}" alt="${name}" />
-          </div>
-          <span>${name}</span>
-        </div>
-        `
-      );
-    });
-  }
+  renderSkills(softContainer, softRows);
 }
 
 /* ===== Testimonials Loader (FINAL) ===== */
@@ -1329,30 +1286,18 @@ async function loadFooterImages() {
     if (!container) return;
 
     container.innerHTML = '';
+    const imageUrls = rows.slice(1).map((row) => row.c[0]?.v).filter(Boolean);
+    const appendImages = () => {
+      imageUrls.forEach((imgUrl) => {
+        const img = document.createElement('img');
+        img.src = imgUrl;
+        img.loading = 'lazy';
+        container.appendChild(img);
+      });
+    };
 
-    /* First pass */
-    rows.slice(1).forEach(row => {
-      const imgUrl = row.c[0]?.v;
-      if (!imgUrl) return;
-
-      const img = document.createElement('img');
-      img.src = imgUrl;
-      img.loading = 'lazy';
-
-      container.appendChild(img);
-    });
-
-    /* Duplicate for infinite scrolling */
-    rows.slice(1).forEach(row => {
-      const imgUrl = row.c[0]?.v;
-      if (!imgUrl) return;
-
-      const img = document.createElement('img');
-      img.src = imgUrl;
-      img.loading = 'lazy';
-
-      container.appendChild(img);
-    });
+    appendImages();
+    appendImages(); // duplicate for seamless infinite scrolling animation
 
   } catch (err) {
     console.error('Footer image load failed:', err);
@@ -1419,7 +1364,7 @@ async function loadBlogs() {
     pagination.style.display = cachedBundle.paginationDisplay || 'none';
   }
 
-  const SHEET_NAMES = ['blogs'];
+  const sheetName = 'blogs';
 
   const getCellValue = (cell) => {
     if (!cell) return '';
@@ -1450,7 +1395,6 @@ async function loadBlogs() {
   let loadedAny = false;
 
   try {
-  for (const sheetName of SHEET_NAMES) {
     const url = getSheetUrl(sheetName);
 
     try {
@@ -1459,7 +1403,9 @@ async function loadBlogs() {
       const rows = parseGoogleResponse(text);
       if (requestId !== blogsLoadRequestId) return false;
 
-      if (!rows || rows.length === 0) continue;
+      if (!rows || rows.length === 0) {
+        throw new Error('No blog rows returned');
+      }
 
       // Map columns from header row first; fall back to A-D if headers are absent.
       const headers = (rows[0]?.c || []).map((c) => getCellValue(c).toLowerCase());
@@ -1535,9 +1481,8 @@ async function loadBlogs() {
         return true;
       }
     } catch (error) {
-      // try next sheet candidate
+      // fall through to visible fallback
     }
-  }
 
   // Show a visible fallback so the section never appears empty while debugging data issues.
   if (requestId !== blogsLoadRequestId) return false;
@@ -1746,7 +1691,7 @@ function initResponsiveNavbar() {
 
   hamburger.addEventListener("click", () => {
     const isOpen = navLinks.classList.contains("nav-active");
-    hamburger.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    hamburger.setAttribute("aria-expanded", isOpen ? "false" : "true");
   });
 
   document.addEventListener("keydown", (e) => {
