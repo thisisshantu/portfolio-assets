@@ -318,6 +318,64 @@ function parseGoogleResponse(text) {
   return json.table.rows;
 }
 
+function resolveSectionTarget(target) {
+  if (!target) return null;
+  if (target instanceof Element) return target;
+  if (typeof target !== 'string') return null;
+  return document.getElementById(target) || document.querySelector(target);
+}
+
+function startSectionLoader(target, message) {
+  const host = resolveSectionTarget(target);
+  if (!host) return () => {};
+
+  host.classList.add('section-loading');
+
+  if (!host.dataset.loaderPrevMinHeight) {
+    host.dataset.loaderPrevMinHeight = host.style.minHeight || '';
+  }
+  if (!host.style.minHeight) {
+    host.style.minHeight = '140px';
+  }
+
+  let loader = host.querySelector(':scope > .section-loader');
+  if (!loader) {
+    loader = document.createElement('div');
+    loader.className = 'section-loader';
+    loader.innerHTML =
+      '<span class="section-loader-spinner" aria-hidden="true"></span>' +
+      '<span class="section-loader-text"></span>';
+    host.appendChild(loader);
+  }
+
+  const textEl = loader.querySelector('.section-loader-text');
+  if (textEl) textEl.textContent = message || 'Loading...';
+
+  return () => {
+    const currentHost = resolveSectionTarget(target);
+    if (!currentHost) return;
+    const currentLoader = currentHost.querySelector(':scope > .section-loader');
+    if (currentLoader) currentLoader.remove();
+    currentHost.classList.remove('section-loading');
+
+    const prevMinHeight = currentHost.dataset.loaderPrevMinHeight;
+    if (prevMinHeight !== undefined) {
+      currentHost.style.minHeight = prevMinHeight;
+      delete currentHost.dataset.loaderPrevMinHeight;
+    }
+  };
+}
+
+function runSectionLoad(target, label, loaderMessage, taskFn) {
+  const stop = startSectionLoader(target, loaderMessage || 'Loading...');
+  Promise.resolve()
+    .then(() => taskFn())
+    .catch((err) => {
+      console.error(`Failed to load ${label}:`, err);
+    })
+    .finally(() => stop());
+}
+
 async function loadExperience() {
   const url = getSheetUrl('Experience');
 
@@ -1136,6 +1194,7 @@ async function loadBlogs() {
   const requestId = ++blogsLoadRequestId;
   const container = getBlogsContainer();
   if (!container) return false;
+  const stopLoader = startSectionLoader(container, 'Loading blogs...');
   let activePage = 1;
   let resizeTimer = null;
   let pagination = document.getElementById('blogs-pagination');
@@ -1176,6 +1235,7 @@ async function loadBlogs() {
 
   let loadedAny = false;
 
+  try {
   for (const sheetName of SHEET_NAMES) {
     const url = getSheetUrl(sheetName);
 
@@ -1288,6 +1348,11 @@ async function loadBlogs() {
     '</div>';
   console.warn('Blogs could not be loaded. Check sheet tab name and sharing settings.');
   return false;
+  } finally {
+    if (requestId === blogsLoadRequestId) {
+      stopLoader();
+    }
+  }
 }
 
 function initBlogsSection() {
@@ -1423,16 +1488,16 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error('SEO metadata load failed:', err);
   });
 
-  loadExperience();
-  loadEducation();
-  loadHeroSection();
-  loadCertifications();
-  loadAboutSection();
-  loadTestimonials();
-  loadVideoSection();
-  loadProjects();
-  loadDesignProjects();
-  loadFooterImages();
+  runSectionLoad('hero', 'hero', 'Loading hero...', loadHeroSection);
+  runSectionLoad('experience-container', 'experience', 'Loading experience...', loadExperience);
+  runSectionLoad('education-container', 'education', 'Loading education...', loadEducation);
+  runSectionLoad('certifications-container', 'certifications', 'Loading certifications...', loadCertifications);
+  runSectionLoad('#about .about-content', 'about', 'Loading about...', loadAboutSection);
+  runSectionLoad('testimonial-container', 'testimonial', 'Loading testimonials...', loadTestimonials);
+  runSectionLoad('video-container', 'videos', 'Loading videos...', loadVideoSection);
+  runSectionLoad('projects-container', 'projects', 'Loading projects...', loadProjects);
+  runSectionLoad('design-container', 'design', 'Loading designs...', loadDesignProjects);
+  runSectionLoad('footer-image-strip', 'footer images', 'Loading footer visuals...', loadFooterImages);
   initBlogsSection();
 
   initScrollTextOverflow();
