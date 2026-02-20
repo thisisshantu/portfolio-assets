@@ -2854,40 +2854,6 @@ nav a.active-nav {
   padding-bottom: clamp(64px, 7vh, 96px);
 }
 
-/* 4) Card consistency and line clamping */
-#certifications-container.certification-grid,
-#projects-container.project-grid,
-#design-container.project-grid,
-#blogs-container.blog-grid,
-#blogs .blog-grid {
-  align-items: stretch !important;
-}
-
-#certifications-container .certification-card,
-#projects-container .project-card,
-#design-container .project-card,
-#blogs-container .blog-card,
-#blogs .blog-card {
-  height: 100%;
-}
-
-.project-card h3,
-.blog-card h3,
-.cert-name {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  -webkit-line-clamp: 2;
-}
-
-.project-card .project-info p,
-.blog-card .blog-excerpt {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  -webkit-line-clamp: 3;
-}
-
 /* 5) Pagination spacing refinement */
 .blog-pagination,
 .section-pagination {
@@ -2939,7 +2905,7 @@ body:not([data-theme='dark']) .recommendation-card .user-profile {
 
 body:not([data-theme='dark']) .recommendation-card .recommendation-description {
   color: #2f435a !important;
-  background: rgba(255, 255, 255, 0.9);
+  background: transparent !important;
 }
 
 body:not([data-theme='dark']) .project-popup .popup-content {
