@@ -3764,16 +3764,14 @@ body:not([data-theme='dark']) #hero .stack-icons i {
   }
 }
 
-/* Hero-only: keep main glass card + profile card static on hover */
-#hero .hero-content,
-#hero .main-img-mobile .circular-img-container {
+/* Hero-only: keep main glass card static on hover */
+#hero .hero-content {
   transition: none !important;
 }
 
 #hero .hero-content:hover,
 #hero .hero-content:hover::before,
-#hero .hero-content:hover::after,
-#hero .main-img-mobile .circular-img-container:hover {
+#hero .hero-content:hover::after {
   transform: none !important;
   animation: none !important;
   box-shadow: inherit !important;
