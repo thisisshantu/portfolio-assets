@@ -1541,46 +1541,36 @@ function initFloatingDocsBackground() {
   document.body.prepend(layer);
 
   const symbols = [
-    { type: 'emoji', value: '📈' },
-    { type: 'emoji', value: '📄' },
-    { type: 'emoji', value: '📜' },
-    { type: 'emoji', value: '📊' },
-    { type: 'emoji', value: '📝' },
-    { type: 'emoji', value: '📑' },
-    { type: 'emoji', value: '📃' },
-    { type: 'emoji', value: '🗂️' },
-    { type: 'emoji', value: '🗃️' },
-    { type: 'emoji', value: '📋' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoftexcel/217346', alt: 'Excel' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoftpowerpoint/B7472A', alt: 'PowerPoint' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoftaccess/A4373A', alt: 'Access' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoftteams/6264A7', alt: 'Teams' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoftoutlook/0078D4', alt: 'Outlook' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/powerautomate/0066FF', alt: 'Power Automate' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/notion/000000', alt: 'Notion' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/google/4285F4', alt: 'Google' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/googleslides/FBBC04', alt: 'Google Slides' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/googlesheets/34A853', alt: 'Google Sheets' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/applenotes/FFCC00', alt: 'Apple Notes' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/apple/000000', alt: 'Apple' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoft365/D83B01', alt: 'Microsoft 365' }
+    { type: 'fa', value: 'fa-solid fa-briefcase', color: '#3b82f6' },
+    { type: 'fa', value: 'fa-solid fa-chart-line', color: '#22c55e' },
+    { type: 'fa', value: 'fa-solid fa-chart-pie', color: '#f59e0b' },
+    { type: 'fa', value: 'fa-solid fa-building', color: '#64748b' },
+    { type: 'fa', value: 'fa-solid fa-building-columns', color: '#6366f1' },
+    { type: 'fa', value: 'fa-solid fa-file-invoice-dollar', color: '#14b8a6' },
+    { type: 'fa', value: 'fa-solid fa-money-bill-trend-up', color: '#10b981' },
+    { type: 'fa', value: 'fa-solid fa-sack-dollar', color: '#84cc16' },
+    { type: 'fa', value: 'fa-solid fa-coins', color: '#eab308' },
+    { type: 'fa', value: 'fa-solid fa-money-check-dollar', color: '#0ea5e9' },
+    { type: 'fa', value: 'fa-solid fa-handshake', color: '#f97316' },
+    { type: 'fa', value: 'fa-solid fa-user-tie', color: '#a855f7' },
+    { type: 'fa', value: 'fa-solid fa-lightbulb', color: '#facc15' },
+    { type: 'fa', value: 'fa-solid fa-clipboard-list', color: '#38bdf8' },
+    { type: 'fa', value: 'fa-solid fa-calendar-check', color: '#4ade80' },
+    { type: 'fa', value: 'fa-solid fa-network-wired', color: '#60a5fa' },
+    { type: 'fa', value: 'fa-solid fa-bullhorn', color: '#fb7185' },
+    { type: 'fa', value: 'fa-solid fa-scale-balanced', color: '#94a3b8' }
   ];
   const count = window.matchMedia('(max-width: 768px)').matches ? 22 : 44;
 
   for (let i = 0; i < count; i += 1) {
     const item = document.createElement('span');
     item.className = 'doc-float-item';
-    const token = symbols[i % symbols.length];
-    if (token.type === 'icon') {
-      const img = document.createElement('img');
-      img.className = 'doc-float-icon';
-      img.src = token.value;
-      img.alt = token.alt;
-      img.loading = 'lazy';
-      item.appendChild(img);
-    } else {
-      item.textContent = token.value;
-    }
+    const token = symbols[Math.floor(Math.random() * symbols.length)];
+    const icon = document.createElement('i');
+    icon.className = token.value + ' doc-float-fa';
+    icon.style.color = token.color;
+    icon.setAttribute('aria-hidden', 'true');
+    item.appendChild(icon);
 
     const left = Math.random() * 100;
     const size = 14 + Math.random() * 42;
