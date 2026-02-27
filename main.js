@@ -28,24 +28,7 @@ function initFadeInObserver() {
 }
 
 function initNavigation() {
-  const hamburger = document.querySelector('.hamburger');
-  const navLinks = document.querySelector('.nav-links');
-  const links = document.querySelectorAll('.nav-links li');
-
-  if (hamburger && navLinks) {
-    hamburger.addEventListener('click', () => {
-      navLinks.classList.toggle('nav-active');
-      hamburger.classList.toggle('toggle');
-    });
-  }
-
-  links.forEach((link) => {
-    link.addEventListener('click', () => {
-      if (navLinks) navLinks.classList.remove('nav-active');
-      if (hamburger) hamburger.classList.remove('toggle');
-    });
-  });
-
+  // Scrollspy-only. Menu open/close lifecycle is handled by initResponsiveNavbar().
   const navLinksEls = document.querySelectorAll('.nav-links a.centered-link');
   const sections = navLinksEls
     ? Array.from(navLinksEls)
@@ -1647,7 +1630,6 @@ function initHeroGearCluster() {
 document.addEventListener('DOMContentLoaded', () => {
   clearStaleSectionLoaders();
   initFloatingDocsBackground();
-  initHeroGearCluster();
   initResponsiveNavbar();
   initFadeInObserver();
   initNavigation();
@@ -1659,16 +1641,21 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error('SEO metadata load failed:', err);
   });
 
-  runSectionLoad('hero', 'hero', 'Loading hero...', loadHeroSection);
-  runSectionLoad('experience-container', 'experience', 'Loading experience...', loadExperience);
-  runSectionLoad('education-container', 'education', 'Loading education...', loadEducation);
-  runSectionLoad('certifications-container', 'certifications', 'Loading certifications...', loadCertifications);
-  runSectionLoad('#about .about-content', 'about', 'Loading about...', loadAboutSection);
-  runSectionLoad('testimonial-container', 'testimonial', 'Loading testimonials...', loadTestimonials);
-  runSectionLoad('video-container', 'videos', 'Loading videos...', loadVideoSection);
-  runSectionLoad('projects-container', 'projects', 'Loading projects...', loadProjects);
-  runSectionLoad('design-container', 'design', 'Loading designs...', loadDesignProjects);
-  runSectionLoad('footer-image-strip', 'footer images', 'Loading footer visuals...', loadFooterImages);
+  const sectionLoads = [
+    ['hero', 'hero', 'Loading hero...', loadHeroSection],
+    ['experience-container', 'experience', 'Loading experience...', loadExperience],
+    ['education-container', 'education', 'Loading education...', loadEducation],
+    ['certifications-container', 'certifications', 'Loading certifications...', loadCertifications],
+    ['#about .about-content', 'about', 'Loading about...', loadAboutSection],
+    ['testimonial-container', 'testimonial', 'Loading testimonials...', loadTestimonials],
+    ['video-container', 'videos', 'Loading videos...', loadVideoSection],
+    ['projects-container', 'projects', 'Loading projects...', loadProjects],
+    ['design-container', 'design', 'Loading designs...', loadDesignProjects],
+    ['footer-image-strip', 'footer images', 'Loading footer visuals...', loadFooterImages],
+  ];
+  sectionLoads.forEach(([target, cacheKey, label, loader]) => {
+    runSectionLoad(target, cacheKey, label, loader);
+  });
   initBlogsSection();
 
   initScrollTextOverflow();
@@ -1679,6 +1666,7 @@ function initResponsiveNavbar() {
   const hamburger = document.querySelector(".hamburger");
   const navLinks = document.querySelector(".nav-links");
   if (!nav || !hamburger || !navLinks) return;
+  let wasMobile = window.matchMedia("(max-width: 1200px)").matches;
 
   function closeMenu() {
     navLinks.classList.remove("nav-active");
@@ -1686,18 +1674,31 @@ function initResponsiveNavbar() {
     hamburger.setAttribute("aria-expanded", "false");
   }
 
+  function openMenu() {
+    navLinks.classList.add("nav-active");
+    hamburger.classList.add("toggle");
+    hamburger.setAttribute("aria-expanded", "true");
+  }
+
   function syncNavPanelSize() {
-    const navHeight = Math.ceil(nav.getBoundingClientRect().height);
+    const measured = Math.ceil(nav.getBoundingClientRect().height);
+    const navHeight = Math.max(56, Math.min(120, measured));
     document.documentElement.style.setProperty("--nav-height", navHeight + "px");
 
-    if (window.matchMedia("(max-width: 1200px)").matches) {
+    const isMobile = window.matchMedia("(max-width: 1200px)").matches;
+
+    if (isMobile) {
       navLinks.style.top = navHeight + "px";
       navLinks.style.height = "calc(100dvh - " + navHeight + "px)";
     } else {
       navLinks.style.top = "";
       navLinks.style.height = "";
+    }
+
+    if (wasMobile !== isMobile) {
       closeMenu();
     }
+    wasMobile = isMobile;
   }
 
   if (!hamburger.hasAttribute("aria-expanded")) {
@@ -1706,7 +1707,17 @@ function initResponsiveNavbar() {
 
   hamburger.addEventListener("click", () => {
     const isOpen = navLinks.classList.contains("nav-active");
-    hamburger.setAttribute("aria-expanded", isOpen ? "false" : "true");
+    if (isOpen) {
+      closeMenu();
+    } else {
+      openMenu();
+    }
+  });
+
+  navLinks.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      if (window.matchMedia("(max-width: 1200px)").matches) closeMenu();
+    });
   });
 
   document.addEventListener("keydown", (e) => {
@@ -1721,7 +1732,10 @@ function initResponsiveNavbar() {
     if (!clickedInsideNav) closeMenu();
   });
 
-  const relayout = () => syncNavPanelSize();
+  const relayout = () => {
+    closeMenu();
+    syncNavPanelSize();
+  };
   window.addEventListener("resize", relayout);
   window.addEventListener("orientationchange", relayout);
 
