@@ -3337,3 +3337,109 @@ body:not([data-theme='dark']) #resume .resume-item p {
     top: 74px;
   }
 }
+
+/* === Fix pass: About/Resume background + heading + independent column scroll === */
+
+/* 1) Keep original section background (emoji layer stays visible behind) */
+#about,
+#resume {
+  background: transparent !important;
+}
+
+#about::after,
+#resume::after {
+  display: none !important;
+}
+
+/* 2) About heading visibility in light mode */
+body:not([data-theme='dark']) #about h2 {
+  color: #2c435c !important;
+}
+
+[data-theme='dark'] #about h2,
+body:not([data-theme]) #about h2 {
+  color: #f2f7ff !important;
+}
+
+/* 3) Experience/Education independent vertical scroll with bottom fade */
+#resume .experience-section .resume-widget,
+#resume .education-section .resume-widget {
+  max-height: 760px;
+  overflow-y: auto;
+  padding-right: 8px;
+  scrollbar-gutter: stable;
+  mask-image: linear-gradient(to bottom, #000 0%, #000 84%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 84%, transparent 100%);
+}
+
+#resume .experience-section .resume-widget::-webkit-scrollbar,
+#resume .education-section .resume-widget::-webkit-scrollbar {
+  width: 8px;
+}
+
+#resume .experience-section .resume-widget::-webkit-scrollbar-thumb,
+#resume .education-section .resume-widget::-webkit-scrollbar-thumb {
+  background: rgba(255, 187, 78, 0.75);
+  border-radius: 999px;
+}
+
+#resume .experience-section .resume-widget::-webkit-scrollbar-track,
+#resume .education-section .resume-widget::-webkit-scrollbar-track {
+  background: rgba(112, 139, 172, 0.14);
+}
+
+/* Disable inner-column scroll on smaller screens for better UX */
+@media (max-width: 1080px) {
+  #resume .experience-section .resume-widget,
+  #resume .education-section .resume-widget {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+}
+
+/* 4) Quick pixel polish: consistent glass finish across core cards */
+.card,
+.resume-item,
+.certification-card,
+.project-card,
+.blog-card,
+.recommendation-card,
+.overlay-content,
+.popup-content {
+  border: 1px solid rgba(170, 202, 243, 0.26);
+  border-radius: 18px;
+  box-shadow: 0 12px 28px rgba(8, 18, 34, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+body:not([data-theme='dark']) .card,
+body:not([data-theme='dark']) .resume-item,
+body:not([data-theme='dark']) .certification-card,
+body:not([data-theme='dark']) .project-card,
+body:not([data-theme='dark']) .blog-card,
+body:not([data-theme='dark']) .recommendation-card,
+body:not([data-theme='dark']) .overlay-content,
+body:not([data-theme='dark']) .popup-content {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.72) 0%, rgba(245, 250, 255, 0.62) 100%);
+}
+
+[data-theme='dark'] .card,
+[data-theme='dark'] .resume-item,
+[data-theme='dark'] .certification-card,
+[data-theme='dark'] .project-card,
+[data-theme='dark'] .blog-card,
+[data-theme='dark'] .recommendation-card,
+[data-theme='dark'] .overlay-content,
+[data-theme='dark'] .popup-content,
+body:not([data-theme]) .card,
+body:not([data-theme]) .resume-item,
+body:not([data-theme]) .certification-card,
+body:not([data-theme]) .project-card,
+body:not([data-theme]) .blog-card,
+body:not([data-theme]) .recommendation-card,
+body:not([data-theme]) .overlay-content,
+body:not([data-theme]) .popup-content {
+  background: linear-gradient(145deg, rgba(20, 33, 58, 0.72) 0%, rgba(12, 24, 45, 0.6) 100%);
+}
