@@ -179,6 +179,21 @@ function initThemeToggle() {
   const darkModeToggle = document.getElementById('dark-mode-toggle');
   if (!darkModeToggle) return;
 
+  const THEME_KEY = 'portfolio_theme';
+
+  function applyTheme(theme) {
+    const isDark = theme === 'dark';
+    document.body.classList.toggle('dark-mode', isDark);
+    if (isDark) {
+      document.body.setAttribute('data-theme', 'dark');
+    } else {
+      document.body.removeAttribute('data-theme');
+    }
+  }
+
+  const savedTheme = localStorage.getItem(THEME_KEY);
+  applyTheme(savedTheme === 'light' ? 'light' : 'dark');
+
   function updateThemeToggleIcon() {
     const icon = darkModeToggle.querySelector('i');
     if (!icon) return;
@@ -194,12 +209,12 @@ function initThemeToggle() {
 
   darkModeToggle.addEventListener('click', (e) => {
     e.preventDefault();
-    document.body.classList.toggle('dark-mode');
-    if (document.body.classList.contains('dark-mode')) {
-      document.body.setAttribute('data-theme', 'dark');
-    } else {
-      document.body.removeAttribute('data-theme');
-    }
+    const nextTheme =
+      document.body.classList.contains('dark-mode') || document.body.getAttribute('data-theme') === 'dark'
+        ? 'light'
+        : 'dark';
+    applyTheme(nextTheme);
+    localStorage.setItem(THEME_KEY, nextTheme);
     updateThemeToggleIcon();
   });
 }
