@@ -3763,3 +3763,24 @@ body:not([data-theme='dark']) #hero .stack-icons i {
     opacity: 1;
   }
 }
+
+/* Disable card hover motion (no lift/scale animation) */
+.card,
+.resume-item,
+.certification-card,
+.project-card,
+.blog-card,
+.recommendation-card {
+  transition-property: border-color, box-shadow, background-color, color !important;
+  transition-duration: 0.2s !important;
+  transform: none !important;
+}
+
+.card:hover,
+.resume-item:hover,
+.certification-card:hover,
+.project-card:hover,
+.blog-card:hover,
+.recommendation-card:hover {
+  transform: none !important;
+}
