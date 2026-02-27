@@ -3443,3 +3443,34 @@ body:not([data-theme]) .overlay-content,
 body:not([data-theme]) .popup-content {
   background: linear-gradient(145deg, rgba(20, 33, 58, 0.72) 0%, rgba(12, 24, 45, 0.6) 100%);
 }
+
+/* === Final About fixes: heading contrast + personal info height balance === */
+body:not([data-theme='dark']) #about h2,
+body[data-theme='light'] #about h2,
+body:not([data-theme]) #about h2 {
+  color: #2a425c !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+[data-theme='dark'] #about h2 {
+  color: #f2f7ff !important;
+  text-shadow: none;
+}
+
+#about .about-text {
+  align-items: start;
+}
+
+#about .about-text > .card:nth-of-type(1) {
+  align-self: start;
+  height: fit-content;
+  padding: 12px 16px;
+  border-radius: 18px;
+}
+
+#about #personal-info-container p {
+  margin: 4px 0;
+  padding: 8px 0;
+  font-size: 0.98rem;
+  line-height: 1.3;
+}
