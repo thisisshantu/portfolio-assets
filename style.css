@@ -2870,18 +2870,7 @@ body:not([data-theme='dark']) .project-popup .popup-close {
   color: #2c4058 !important;
 }
 
-/* === Hide Blogger top navbar/admin iframe === */
-#navbar-iframe,
-.navbar,
-.blogger-navbar,
-.blogger-bar {
+/* === Hide Blogger top admin bar safely (without affecting site layout/classes) === */
+iframe#navbar-iframe {
   display: none !important;
-  visibility: hidden !important;
-  height: 0 !important;
-  min-height: 0 !important;
-}
-
-body {
-  margin-top: 0 !important;
-  padding-top: 0 !important;
 }
