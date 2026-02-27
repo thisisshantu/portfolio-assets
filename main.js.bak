@@ -179,13 +179,28 @@ function initThemeToggle() {
   const darkModeToggle = document.getElementById('dark-mode-toggle');
   if (!darkModeToggle) return;
 
-  darkModeToggle.addEventListener('click', () => {
+  function updateThemeToggleIcon() {
+    const icon = darkModeToggle.querySelector('i');
+    if (!icon) return;
+
+    const isDark = document.body.classList.contains('dark-mode') || document.body.getAttribute('data-theme') === 'dark';
+    icon.classList.remove('fa-sun', 'fa-moon');
+    icon.classList.add(isDark ? 'fa-sun' : 'fa-moon');
+    darkModeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+    darkModeToggle.setAttribute('title', isDark ? 'Light mode' : 'Dark mode');
+  }
+
+  updateThemeToggleIcon();
+
+  darkModeToggle.addEventListener('click', (e) => {
+    e.preventDefault();
     document.body.classList.toggle('dark-mode');
     if (document.body.classList.contains('dark-mode')) {
       document.body.setAttribute('data-theme', 'dark');
     } else {
       document.body.removeAttribute('data-theme');
     }
+    updateThemeToggleIcon();
   });
 }
 
@@ -260,73 +275,279 @@ if (exploreBtn) {
 // You can add more JS for interactivity as needed
 
 const PORTFOLIO_SHEET_ID = '1VYbIKHEgmpHljYLTTHoonE_IlARRpxudiQ_0QFKDRkU';
+const API_BASE = 'https://script.google.com/macros/s/AKfycbzQxsOgxS6Nqof7v9azreuRbq9npoI3zO99F8Npt5XsQBaTyAna8eTmzWi0Jeg0ImcAAQ/exec';
+
+// Endpoints exposed via Apps Script proxy.
+const API_PROXY_ENDPOINTS = new Set([
+  'hero',
+  'experience',
+  'education',
+  'about_intro',
+  'personal_info',
+  'technical_skills',
+  'soft_skills',
+  'certifications',
+  'projects',
+  'videos',
+  'testimonial',
+  'footer_images',
+  'design_projects',
+  'design_assets',
+  'blogs',
+  'seo'
+]);
 
 function getSheetUrl(sheetName) {
+  const key = String(sheetName || '').trim().toLowerCase();
+  if (API_PROXY_ENDPOINTS.has(key)) {
+    return `${API_BASE}?endpoint=${encodeURIComponent(key)}`;
+  }
   return `https://docs.google.com/spreadsheets/d/${PORTFOLIO_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
 }
 
 function parseGoogleResponse(text) {
-  const json = JSON.parse(text.substring(47).slice(0, -2));
+  const raw = String(text || '').trim();
+
+  // Apps Script proxy mode: {"ok":true,"data":[{...}]}
+  if (raw.startsWith('{') || raw.startsWith('[')) {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
+      const data = parsed.data;
+      if (data.length === 0) return [];
+
+      const headers = Object.keys(data[0]);
+      const headerRow = { c: headers.map((h) => ({ v: h })) };
+      const rows = data.map((obj) => ({
+        c: headers.map((h) => {
+          const v = obj[h] ?? '';
+          return { v, f: typeof v === 'string' ? v : undefined };
+        })
+      }));
+
+      return [headerRow, ...rows];
+    }
+  }
+
+  // Google gviz mode.
+  const json = JSON.parse(raw.substring(47).slice(0, -2));
   return json.table.rows;
 }
 
-async function loadExperience() {
-  const url = getSheetUrl('Experience');
+function resolveSectionTarget(target) {
+  if (!target) return null;
+  if (target instanceof Element) return target;
+  if (typeof target !== 'string') return null;
+  return document.getElementById(target) || document.querySelector(target);
+}
 
-  const response = await fetch(url);
-  const text = await response.text();
-  const rows = parseGoogleResponse(text);
+function clearSectionLoadingState(target) {
+  const host = resolveSectionTarget(target);
+  if (!host) return;
 
-  const container = document.getElementById('experience-container');
-  if (!container) return;
-  container.innerHTML = '';
+  host.querySelectorAll('.section-loader').forEach((el) => el.remove());
+  host.classList.remove('section-loading');
+  if (host.dataset && host.dataset.loaderPrevMinHeight !== undefined) {
+    host.style.minHeight = host.dataset.loaderPrevMinHeight;
+    delete host.dataset.loaderPrevMinHeight;
+  }
+}
 
-  rows.forEach((row, index) => {
-    const start = row.c[0]?.v;
-    const end = row.c[1]?.v;
-    const title = row.c[2]?.v;
-    const company = row.c[3]?.v;
-    const location = row.c[4]?.v;
-    const description = row.c[5]?.v;
+const SECTION_HTML_CACHE_PREFIX = 'portfolio_section_html_v1:';
 
-    container.innerHTML += `
-      <div class="resume-item wow fadeInLeft" data-wow-delay="0.${index + 3}s">
-        <div class="time">${start} - ${end}</div>
-        <h3 class="resume-title">${title}</h3>
-        <div class="institute">${company}, ${location}</div>
-        <p>${description}</p>
-      </div>
-    `;
+function readSectionCache(cacheKey) {
+  if (!cacheKey) return null;
+  try {
+    return sessionStorage.getItem(SECTION_HTML_CACHE_PREFIX + cacheKey);
+  } catch (err) {
+    return null;
+  }
+}
+
+function writeSectionCache(cacheKey, html) {
+  if (!cacheKey) return;
+  try {
+    sessionStorage.setItem(SECTION_HTML_CACHE_PREFIX + cacheKey, html || '');
+  } catch (err) {
+    // ignore storage quota / privacy mode failures
+  }
+}
+
+function startTopRefreshBadge(message) {
+  let badge = document.getElementById('top-refresh-loader');
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.id = 'top-refresh-loader';
+    badge.className = 'top-refresh-loader';
+    badge.innerHTML =
+      '<span class="section-loader-spinner" aria-hidden="true"></span>' +
+      '<span class="top-refresh-loader-text"></span>';
+    document.body.appendChild(badge);
+  }
+
+  const textEl = badge.querySelector('.top-refresh-loader-text');
+  if (textEl) textEl.textContent = message || 'Syncing...';
+  badge.classList.add('active');
+
+  return () => {
+    const current = document.getElementById('top-refresh-loader');
+    if (!current) return;
+    current.classList.remove('active');
+  };
+}
+
+function startSectionLoader(target, message) {
+  const host = resolveSectionTarget(target);
+  if (!host) return () => {};
+
+  host.classList.add('section-loading');
+
+  if (!host.dataset.loaderPrevMinHeight) {
+    host.dataset.loaderPrevMinHeight = host.style.minHeight || '';
+  }
+  if (!host.style.minHeight) {
+    host.style.minHeight = '140px';
+  }
+
+  let loader = host.querySelector('.section-loader');
+  if (!loader) {
+    loader = document.createElement('div');
+    loader.className = 'section-loader';
+    loader.innerHTML =
+      '<span class="section-loader-spinner" aria-hidden="true"></span>' +
+      '<span class="section-loader-text"></span>';
+    host.appendChild(loader);
+  }
+
+  const textEl = loader.querySelector('.section-loader-text');
+  if (textEl) textEl.textContent = message || 'Loading...';
+
+  // Safety valve: never let a section loader stay forever.
+  const failSafeTimer = window.setTimeout(() => {
+    clearSectionLoadingState(target);
+  }, 15000);
+
+  return () => {
+    window.clearTimeout(failSafeTimer);
+    clearSectionLoadingState(target);
+  };
+}
+
+function clearStaleSectionLoaders() {
+  document.querySelectorAll('.section-loading, .section-loader').forEach((el) => {
+    const host = el.classList.contains('section-loading') ? el : el.closest('.section-loading') || el.parentElement;
+    if (host) clearSectionLoadingState(host);
   });
 }
 
-async function loadEducation() {
-  const url = getSheetUrl('Education');
+function runSectionLoad(target, label, loaderMessage, taskFn) {
+  const host = resolveSectionTarget(target);
+  const cacheKey = label ? String(label).toLowerCase().replace(/\s+/g, '_') : '';
+  const cachedHtml = host ? readSectionCache(cacheKey) : null;
+  const hasCache = !!(cachedHtml && cachedHtml.trim());
 
-  const response = await fetch(url);
+  if (host && hasCache) {
+    host.innerHTML = cachedHtml;
+    clearSectionLoadingState(host);
+  }
+
+  const isHero = cacheKey === 'hero';
+  const isAbout = cacheKey === 'about';
+
+  // Hero/About should not be masked by a full overlay loader.
+  const allowInlineLoader = !isHero && !isAbout;
+  const stopInlineLoader = hasCache || !allowInlineLoader
+    ? () => {}
+    : startSectionLoader(target, loaderMessage || 'Loading...');
+  const stopTopBadge = isHero
+    ? startTopRefreshBadge(hasCache ? 'Refreshing hero...' : 'Loading hero...')
+    : () => {};
+  let didCleanup = false;
+  const cleanup = () => {
+    if (didCleanup) return;
+    didCleanup = true;
+    stopInlineLoader();
+    stopTopBadge();
+
+    const finalHost = resolveSectionTarget(target);
+    if (!finalHost) return;
+    clearSectionLoadingState(finalHost);
+  };
+  const hardStopTimer = window.setTimeout(cleanup, 15000);
+
+  Promise.resolve()
+    .then(() => taskFn())
+    .then(() => {
+      const finalHost = resolveSectionTarget(target);
+      if (!finalHost || !cacheKey) return;
+
+      const snapshot = finalHost.cloneNode(true);
+      snapshot.querySelectorAll('.section-loader').forEach((el) => el.remove());
+      writeSectionCache(cacheKey, snapshot.innerHTML);
+    })
+    .catch((err) => {
+      console.error(`Failed to load ${label}:`, err);
+    })
+    .finally(() => {
+      window.clearTimeout(hardStopTimer);
+      cleanup();
+    });
+}
+
+async function loadTimelineSection(config) {
+  const {
+    sheet,
+    containerId,
+    titleColumn,
+    instituteColumn,
+    animationClass
+  } = config;
+
+  const response = await fetch(getSheetUrl(sheet));
   const text = await response.text();
   const rows = parseGoogleResponse(text);
 
-  const container = document.getElementById('education-container');
+  const container = document.getElementById(containerId);
   if (!container) return;
   container.innerHTML = '';
 
-  rows.forEach((row, index) => {
+  const cards = rows.slice(1).map((row, index) => {
     const start = row.c[0]?.v;
     const end = row.c[1]?.v;
-    const degree = row.c[2]?.v;
-    const institute = row.c[3]?.v;
+    const title = row.c[titleColumn]?.v;
+    const institute = row.c[instituteColumn]?.v;
     const location = row.c[4]?.v;
     const description = row.c[5]?.v;
 
-    container.innerHTML += `
-      <div class="resume-item wow fadeInRight" data-wow-delay="0.${index + 3}s">
+    return `
+      <div class="resume-item wow ${animationClass}" data-wow-delay="0.${index + 3}s">
         <div class="time">${start} - ${end}</div>
-        <h3 class="resume-title">${degree}</h3>
+        <h3 class="resume-title">${title}</h3>
         <div class="institute">${institute}, ${location}</div>
         <p>${description}</p>
       </div>
     `;
+  });
+
+  container.insertAdjacentHTML('beforeend', cards.join(''));
+}
+
+async function loadExperience() {
+  await loadTimelineSection({
+    sheet: 'Experience',
+    containerId: 'experience-container',
+    titleColumn: 2,
+    instituteColumn: 3,
+    animationClass: 'fadeInLeft'
+  });
+}
+
+async function loadEducation() {
+  await loadTimelineSection({
+    sheet: 'Education',
+    containerId: 'education-container',
+    titleColumn: 2,
+    instituteColumn: 3,
+    animationClass: 'fadeInRight'
   });
 }
 
@@ -342,29 +563,125 @@ async function loadHeroSection() {
     heroData[row.c[0]?.v] = row.c[1]?.v;
   });
 
-  // Text
-  const availability = document.getElementById('hero-availability');
-  const headline = document.getElementById('hero-headline');
-  const subheadline = document.getElementById('hero-subheadline');
-  if (availability) availability.textContent = heroData.availability;
-  if (headline) headline.textContent = heroData.headline;
-  if (subheadline) subheadline.textContent = heroData.subheadline;
+  const setText = (id, value) => {
+    const el = document.getElementById(id);
+    if (el && value !== undefined && value !== null) el.textContent = value;
+  };
+  const setHref = (id, value) => {
+    const el = document.getElementById(id);
+    if (el && value) el.href = value;
+  };
 
-  // Links
-  const linkedin = document.getElementById('hero-linkedin');
-  const facebook = document.getElementById('hero-facebook');
-  const instagram = document.getElementById('hero-instagram');
-  const whatsapp = document.getElementById('hero-whatsapp');
-  const resume = document.getElementById('hero-resume');
-  if (linkedin) linkedin.href = heroData.linkedin;
-  if (facebook) facebook.href = heroData.facebook;
-  if (instagram) instagram.href = heroData.instagram;
-  if (whatsapp) whatsapp.href = heroData.whatsapp;
-  if (resume) resume.href = heroData.resume;
+  setText('hero-availability', heroData.availability);
+  setText('hero-headline', heroData.headline);
+  setText('hero-subheadline', heroData.subheadline);
 
-  // Image
+  setHref('hero-linkedin', heroData.linkedin);
+  setHref('hero-facebook', heroData.facebook);
+  setHref('hero-instagram', heroData.instagram);
+  setHref('hero-whatsapp', heroData.whatsapp);
+  setHref('hero-resume', heroData.resume);
+
   const heroImage = document.getElementById('hero-profile-image');
-  if (heroImage) heroImage.src = heroData.profile_image;
+  if (heroImage && heroData.profile_image) heroImage.src = heroData.profile_image;
+}
+
+function upsertMetaByName(name, content) {
+  if (!name || !content) return;
+  let tag = document.querySelector(`meta[name="${name}"]`);
+  if (!tag) {
+    tag = document.createElement('meta');
+    tag.setAttribute('name', name);
+    document.head.appendChild(tag);
+  }
+  tag.setAttribute('content', content);
+}
+
+function upsertMetaByProperty(property, content) {
+  if (!property || !content) return;
+  let tag = document.querySelector(`meta[property="${property}"]`);
+  if (!tag) {
+    tag = document.createElement('meta');
+    tag.setAttribute('property', property);
+    document.head.appendChild(tag);
+  }
+  tag.setAttribute('content', content);
+}
+
+function upsertCanonical(url) {
+  if (!url) return;
+  let link = document.querySelector('link[rel="canonical"]');
+  if (!link) {
+    link = document.createElement('link');
+    link.setAttribute('rel', 'canonical');
+    document.head.appendChild(link);
+  }
+  link.setAttribute('href', url);
+}
+
+async function loadSeoMetadata() {
+  const url = getSheetUrl('seo');
+  const response = await fetch(url);
+  const text = await response.text();
+  const rows = parseGoogleResponse(text);
+  if (!rows || rows.length === 0) return;
+
+  const getVal = (cell) => {
+    if (!cell) return '';
+    if (cell.v !== undefined && cell.v !== null) return String(cell.v).trim();
+    if (cell.f !== undefined && cell.f !== null) return String(cell.f).trim();
+    return '';
+  };
+
+  const header = (rows[0]?.c || []).map((c) => getVal(c).toLowerCase());
+  const hasHeader = header.includes('page_key');
+  const dataRows = rows.slice(hasHeader ? 1 : 0);
+
+  const findCol = (aliases, fallbackIndex) => {
+    const idx = header.findIndex((h) => aliases.some((a) => h === a || h.includes(a)));
+    return idx >= 0 ? idx : fallbackIndex;
+  };
+
+  const colPageKey = findCol(['page_key', 'page key', 'key'], 0);
+  const colTitle = findCol(['title', 'meta title'], 1);
+  const colDescription = findCol(['meta_description', 'meta description', 'description'], 2);
+  const colThumb = findCol(['thumbnail_url', 'thumbnail url', 'og image', 'image'], 3);
+  const colOgType = findCol(['og_type', 'og type', 'type'], 4);
+  const colTwitterCard = findCol(['twitter_card', 'twitter card'], 5);
+
+  const pageKey =
+    document.body?.getAttribute('data-page-key') ||
+    document.querySelector('meta[name="page_key"]')?.getAttribute('content') ||
+    'portfolio_home';
+
+  const row =
+    dataRows.find((r) => getVal(r?.c?.[colPageKey]) === pageKey) ||
+    dataRows.find((r) => getVal(r?.c?.[colPageKey]) === 'portfolio_home') ||
+    dataRows[0];
+
+  if (!row) return;
+
+  const title = getVal(row.c?.[colTitle]);
+  const description = getVal(row.c?.[colDescription]);
+  const thumbnailUrl = getVal(row.c?.[colThumb]);
+  const ogType = getVal(row.c?.[colOgType]) || 'website';
+  const twitterCard = getVal(row.c?.[colTwitterCard]) || 'summary_large_image';
+  const cleanUrl = window.location.href.split('#')[0];
+
+  if (title) document.title = title;
+  if (description) upsertMetaByName('description', description);
+
+  upsertCanonical(cleanUrl);
+  if (title) upsertMetaByProperty('og:title', title);
+  if (description) upsertMetaByProperty('og:description', description);
+  if (thumbnailUrl) upsertMetaByProperty('og:image', thumbnailUrl);
+  upsertMetaByProperty('og:url', cleanUrl);
+  upsertMetaByProperty('og:type', ogType);
+
+  upsertMetaByName('twitter:card', twitterCard);
+  if (title) upsertMetaByName('twitter:title', title);
+  if (description) upsertMetaByName('twitter:description', description);
+  if (thumbnailUrl) upsertMetaByName('twitter:image', thumbnailUrl);
 }
 
 /* ===== Date Formatter (Handles Google Date format) ===== */
@@ -411,40 +728,118 @@ function ensureSectionPagination(container, paginationId) {
   return pagination;
 }
 
+function getResponsiveItemsPerPage() {
+  if (window.matchMedia('(min-width: 1200px)').matches) return 4;
+  if (window.matchMedia('(min-width: 900px)').matches) return 3;
+  if (window.matchMedia('(min-width: 640px)').matches) return 2;
+  return 1;
+}
+
+const sectionResizeHandlers = {};
+
+function getPaginationTokens(totalPages, activePage) {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, idx) => idx + 1);
+  }
+
+  if (activePage <= 3) {
+    return [1, 2, 3, 'ellipsis', totalPages];
+  }
+
+  if (activePage >= totalPages - 2) {
+    return [1, 'ellipsis', totalPages - 2, totalPages - 1, totalPages];
+  }
+
+  return [1, 'ellipsis', activePage - 1, activePage, activePage + 1, 'ellipsis', totalPages];
+}
+
+function renderPaginationControls(pagination, totalPages, activePage, onPageSelect) {
+  if (!pagination) return;
+  pagination.innerHTML = '';
+
+  if (totalPages <= 1) {
+    pagination.style.display = 'none';
+    return;
+  }
+
+  pagination.style.display = 'flex';
+
+  const prevBtn = document.createElement('button');
+  prevBtn.type = 'button';
+  prevBtn.className = 'blog-page-btn section-page-btn page-nav-btn';
+  prevBtn.setAttribute('aria-label', 'Previous page');
+  prevBtn.disabled = activePage === 1;
+  prevBtn.innerHTML = '<i class="fa-solid fa-chevron-left" aria-hidden="true"></i>';
+  prevBtn.addEventListener('click', () => {
+    if (activePage > 1) onPageSelect(activePage - 1);
+  });
+  pagination.appendChild(prevBtn);
+
+  const tokens = getPaginationTokens(totalPages, activePage);
+  tokens.forEach((token) => {
+    if (token === 'ellipsis') {
+      const ellipsis = document.createElement('span');
+      ellipsis.className = 'blog-page-btn section-page-btn page-ellipsis';
+      ellipsis.textContent = '...';
+      pagination.appendChild(ellipsis);
+      return;
+    }
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'blog-page-btn section-page-btn' + (token === activePage ? ' active' : '');
+    btn.textContent = String(token);
+    btn.setAttribute('aria-label', `Page ${token}`);
+    btn.setAttribute('aria-current', token === activePage ? 'page' : 'false');
+    btn.addEventListener('click', () => onPageSelect(token));
+    pagination.appendChild(btn);
+  });
+
+  const nextBtn = document.createElement('button');
+  nextBtn.type = 'button';
+  nextBtn.className = 'blog-page-btn section-page-btn page-nav-btn';
+  nextBtn.setAttribute('aria-label', 'Next page');
+  nextBtn.disabled = activePage === totalPages;
+  nextBtn.innerHTML = '<i class="fa-solid fa-chevron-right" aria-hidden="true"></i>';
+  nextBtn.addEventListener('click', () => {
+    if (activePage < totalPages) onPageSelect(activePage + 1);
+  });
+  pagination.appendChild(nextBtn);
+}
+
 function applySectionPagination(container, paginationId, cards) {
   if (!container) return;
   const pagination = ensureSectionPagination(container, paginationId);
   if (!pagination) return;
-  const pageSize = 4;
+  let activePage = 1;
+  let resizeTimer = null;
 
-  const totalPages = Math.max(1, Math.ceil(cards.length / pageSize));
   const renderPage = (page) => {
-    const currentPage = Math.min(Math.max(1, page), totalPages);
-    const start = (currentPage - 1) * pageSize;
+    const pageSize = getResponsiveItemsPerPage();
+    const totalPages = Math.max(1, Math.ceil(cards.length / pageSize));
+    activePage = Math.min(Math.max(1, page), totalPages);
+    const start = (activePage - 1) * pageSize;
     const pageCards = cards.slice(start, start + pageSize);
 
     container.innerHTML = '';
     container.insertAdjacentHTML('beforeend', pageCards.join(''));
 
-    pagination.innerHTML = '';
-    if (totalPages <= 1) {
-      pagination.style.display = 'none';
-    } else {
-      pagination.style.display = 'flex';
-      for (let i = 1; i <= totalPages; i += 1) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'blog-page-btn section-page-btn' + (i === currentPage ? ' active' : '');
-        btn.textContent = String(i);
-        btn.addEventListener('click', () => renderPage(i));
-        pagination.appendChild(btn);
-      }
-    }
+    renderPaginationControls(pagination, totalPages, activePage, renderPage);
 
     initScrollTextOverflow();
   };
 
   renderPage(1);
+
+  const onResize = () => {
+    if (resizeTimer) window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(() => renderPage(activePage), 120);
+  };
+  if (sectionResizeHandlers[paginationId]) {
+    window.removeEventListener('resize', sectionResizeHandlers[paginationId]);
+  }
+  sectionResizeHandlers[paginationId] = onResize;
+  window.addEventListener('resize', onResize);
 }
 
 /* ===== Certifications Loader ===== */
@@ -503,6 +898,30 @@ async function loadAboutSection() {
     return parseGoogleResponse(text);
   }
 
+  function renderSkills(container, rows) {
+    if (!container) return;
+    container.innerHTML = '';
+
+    rows.slice(1).forEach((row) => {
+      const name = row.c[0]?.v;
+      const image = row.c[1]?.v;
+      const percent = row.c[2]?.v;
+      if (!name || !percent) return;
+
+      container.insertAdjacentHTML(
+        'beforeend',
+        `
+        <div class="skill-item">
+          <div class="skill-circle" style="--percent:${percent}%" data-percent="${percent}%">
+            <img src="${image}" alt="${name}" />
+          </div>
+          <span>${name}</span>
+        </div>
+        `
+      );
+    });
+  }
+
   /* ===== About Intro (skip header row) ===== */
   const introRows = await fetchSheet('about_intro');
   const introEl = document.getElementById('about-intro');
@@ -532,56 +951,12 @@ async function loadAboutSection() {
   /* ===== Technical Skills (skip header row) ===== */
   const techRows = await fetchSheet('technical_skills');
   const techContainer = document.getElementById('technical-skills-container');
-
-  if (techContainer) {
-    techContainer.innerHTML = '';
-
-    techRows.slice(1).forEach(row => {
-      const name = row.c[0]?.v;
-      const image = row.c[1]?.v;
-      const percent = row.c[2]?.v;
-      if (!name || !percent) return;
-
-      techContainer.insertAdjacentHTML(
-        'beforeend',
-        `
-        <div class="skill-item">
-          <div class="skill-circle" style="--percent:${percent}%" data-percent="${percent}%">
-            <img src="${image}" alt="${name}" />
-          </div>
-          <span>${name}</span>
-        </div>
-        `
-      );
-    });
-  }
+  renderSkills(techContainer, techRows);
 
   /* ===== Soft Skills (skip header row) ===== */
   const softRows = await fetchSheet('soft_skills');
   const softContainer = document.getElementById('soft-skills-container');
-
-  if (softContainer) {
-    softContainer.innerHTML = '';
-
-    softRows.slice(1).forEach(row => {
-      const name = row.c[0]?.v;
-      const image = row.c[1]?.v;
-      const percent = row.c[2]?.v;
-      if (!name || !percent) return;
-
-      softContainer.insertAdjacentHTML(
-        'beforeend',
-        `
-        <div class="skill-item">
-          <div class="skill-circle" style="--percent:${percent}%" data-percent="${percent}%">
-            <img src="${image}" alt="${name}" />
-          </div>
-          <span>${name}</span>
-        </div>
-        `
-      );
-    });
-  }
+  renderSkills(softContainer, softRows);
 }
 
 /* ===== Testimonials Loader (FINAL) ===== */
@@ -911,30 +1286,18 @@ async function loadFooterImages() {
     if (!container) return;
 
     container.innerHTML = '';
+    const imageUrls = rows.slice(1).map((row) => row.c[0]?.v).filter(Boolean);
+    const appendImages = () => {
+      imageUrls.forEach((imgUrl) => {
+        const img = document.createElement('img');
+        img.src = imgUrl;
+        img.loading = 'lazy';
+        container.appendChild(img);
+      });
+    };
 
-    /* First pass */
-    rows.slice(1).forEach(row => {
-      const imgUrl = row.c[0]?.v;
-      if (!imgUrl) return;
-
-      const img = document.createElement('img');
-      img.src = imgUrl;
-      img.loading = 'lazy';
-
-      container.appendChild(img);
-    });
-
-    /* Duplicate for infinite scrolling */
-    rows.slice(1).forEach(row => {
-      const imgUrl = row.c[0]?.v;
-      if (!imgUrl) return;
-
-      const img = document.createElement('img');
-      img.src = imgUrl;
-      img.loading = 'lazy';
-
-      container.appendChild(img);
-    });
+    appendImages();
+    appendImages(); // duplicate for seamless infinite scrolling animation
 
   } catch (err) {
     console.error('Footer image load failed:', err);
@@ -942,6 +1305,7 @@ async function loadFooterImages() {
 }
 
 let blogsLoadRequestId = 0;
+let blogsResizeHandler = null;
 
 function getBlogsContainer() {
   let container =
@@ -968,7 +1332,26 @@ async function loadBlogs() {
   const requestId = ++blogsLoadRequestId;
   const container = getBlogsContainer();
   if (!container) return false;
-  const pageSize = 4;
+  const blogsCacheKey = 'blogs_section_bundle_v1';
+  const cachedBundleRaw = readSectionCache(blogsCacheKey);
+  let hasBlogsCache = false;
+  let cachedBundle = null;
+  if (cachedBundleRaw) {
+    try {
+      cachedBundle = JSON.parse(cachedBundleRaw);
+      if (cachedBundle && typeof cachedBundle === 'object') {
+        if (cachedBundle.containerHtml) {
+          container.innerHTML = cachedBundle.containerHtml;
+        }
+        hasBlogsCache = !!cachedBundle.containerHtml;
+      }
+    } catch (err) {
+      // ignore cache parse failures
+    }
+  }
+  const stopLoader = hasBlogsCache ? () => {} : startSectionLoader(container, 'Loading blogs...');
+  let activePage = 1;
+  let resizeTimer = null;
   let pagination = document.getElementById('blogs-pagination');
   if (!pagination) {
     pagination = document.createElement('div');
@@ -976,8 +1359,12 @@ async function loadBlogs() {
     pagination.className = 'blog-pagination';
     container.insertAdjacentElement('afterend', pagination);
   }
+  if (cachedBundle && cachedBundle.paginationHtml !== undefined) {
+    pagination.innerHTML = cachedBundle.paginationHtml || '';
+    pagination.style.display = cachedBundle.paginationDisplay || 'none';
+  }
 
-  const SHEET_NAMES = ['blogs', 'Blogs', 'BLOGS', 'Sheet1', 'sheet1'];
+  const sheetName = 'blogs';
 
   const getCellValue = (cell) => {
     if (!cell) return '';
@@ -1007,7 +1394,7 @@ async function loadBlogs() {
 
   let loadedAny = false;
 
-  for (const sheetName of SHEET_NAMES) {
+  try {
     const url = getSheetUrl(sheetName);
 
     try {
@@ -1016,7 +1403,9 @@ async function loadBlogs() {
       const rows = parseGoogleResponse(text);
       if (requestId !== blogsLoadRequestId) return false;
 
-      if (!rows || rows.length === 0) continue;
+      if (!rows || rows.length === 0) {
+        throw new Error('No blog rows returned');
+      }
 
       // Map columns from header row first; fall back to A-D if headers are absent.
       const headers = (rows[0]?.c || []).map((c) => getCellValue(c).toLowerCase());
@@ -1060,40 +1449,40 @@ async function loadBlogs() {
 
       if (loadedAny) {
         if (requestId !== blogsLoadRequestId) return false;
-        const totalPages = Math.ceil(nextCards.length / pageSize);
         const renderPage = (page) => {
           if (requestId !== blogsLoadRequestId) return;
-          const currentPage = Math.max(1, Math.min(page, totalPages));
-          const start = (currentPage - 1) * pageSize;
+          const pageSize = getResponsiveItemsPerPage();
+          const totalPages = Math.max(1, Math.ceil(nextCards.length / pageSize));
+          activePage = Math.max(1, Math.min(page, totalPages));
+          const start = (activePage - 1) * pageSize;
           const pageCards = nextCards.slice(start, start + pageSize);
 
           container.innerHTML = '';
           container.insertAdjacentHTML('beforeend', pageCards.join(''));
 
-          pagination.innerHTML = '';
-          if (totalPages <= 1) {
-            pagination.style.display = 'none';
-            return;
-          }
-
-          pagination.style.display = 'flex';
-          for (let i = 1; i <= totalPages; i += 1) {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'blog-page-btn' + (i === currentPage ? ' active' : '');
-            btn.textContent = String(i);
-            btn.addEventListener('click', () => renderPage(i));
-            pagination.appendChild(btn);
-          }
+          renderPaginationControls(pagination, totalPages, activePage, renderPage);
         };
 
         renderPage(1);
+        writeSectionCache(blogsCacheKey, JSON.stringify({
+          containerHtml: container.innerHTML,
+          paginationHtml: pagination.innerHTML,
+          paginationDisplay: pagination.style.display || ''
+        }));
+        if (blogsResizeHandler) {
+          window.removeEventListener('resize', blogsResizeHandler);
+        }
+        blogsResizeHandler = () => {
+          if (requestId !== blogsLoadRequestId) return;
+          if (resizeTimer) window.clearTimeout(resizeTimer);
+          resizeTimer = window.setTimeout(() => renderPage(activePage), 120);
+        };
+        window.addEventListener('resize', blogsResizeHandler);
         return true;
       }
     } catch (error) {
-      // try next sheet candidate
+      // fall through to visible fallback
     }
-  }
 
   // Show a visible fallback so the section never appears empty while debugging data issues.
   if (requestId !== blogsLoadRequestId) return false;
@@ -1107,8 +1496,18 @@ async function loadBlogs() {
       '<p class="blog-meta">Data source not found</p>' +
       '<p>Please verify the Google Sheet tab name and rows.</p>' +
     '</div>';
+  writeSectionCache(blogsCacheKey, JSON.stringify({
+    containerHtml: container.innerHTML,
+    paginationHtml: pagination ? pagination.innerHTML : '',
+    paginationDisplay: pagination ? (pagination.style.display || '') : ''
+  }));
   console.warn('Blogs could not be loaded. Check sheet tab name and sharing settings.');
   return false;
+  } finally {
+    if (requestId === blogsLoadRequestId) {
+      stopLoader();
+    }
+  }
 }
 
 function initBlogsSection() {
@@ -1231,6 +1630,7 @@ function initHeroGearCluster() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  clearStaleSectionLoaders();
   initFloatingDocsBackground();
   initHeroGearCluster();
   initResponsiveNavbar();
@@ -1240,16 +1640,20 @@ document.addEventListener('DOMContentLoaded', () => {
   initIframePlaceholders();
   initThemeToggle();
 
-  loadExperience();
-  loadEducation();
-  loadHeroSection();
-  loadCertifications();
-  loadAboutSection();
-  loadTestimonials();
-  loadVideoSection();
-  loadProjects();
-  loadDesignProjects();
-  loadFooterImages();
+  loadSeoMetadata().catch((err) => {
+    console.error('SEO metadata load failed:', err);
+  });
+
+  runSectionLoad('hero', 'hero', 'Loading hero...', loadHeroSection);
+  runSectionLoad('experience-container', 'experience', 'Loading experience...', loadExperience);
+  runSectionLoad('education-container', 'education', 'Loading education...', loadEducation);
+  runSectionLoad('certifications-container', 'certifications', 'Loading certifications...', loadCertifications);
+  runSectionLoad('#about .about-content', 'about', 'Loading about...', loadAboutSection);
+  runSectionLoad('testimonial-container', 'testimonial', 'Loading testimonials...', loadTestimonials);
+  runSectionLoad('video-container', 'videos', 'Loading videos...', loadVideoSection);
+  runSectionLoad('projects-container', 'projects', 'Loading projects...', loadProjects);
+  runSectionLoad('design-container', 'design', 'Loading designs...', loadDesignProjects);
+  runSectionLoad('footer-image-strip', 'footer images', 'Loading footer visuals...', loadFooterImages);
   initBlogsSection();
 
   initScrollTextOverflow();
@@ -1287,7 +1691,7 @@ function initResponsiveNavbar() {
 
   hamburger.addEventListener("click", () => {
     const isOpen = navLinks.classList.contains("nav-active");
-    hamburger.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    hamburger.setAttribute("aria-expanded", isOpen ? "false" : "true");
   });
 
   document.addEventListener("keydown", (e) => {
