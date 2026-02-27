@@ -2874,3 +2874,466 @@ body:not([data-theme='dark']) .project-popup .popup-close {
 iframe#navbar-iframe {
   display: none !important;
 }
+
+/* === About Section Redesign (glass + two-column hero info + skill decks) === */
+#about {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(1200px 520px at 12% 16%, rgba(72, 140, 255, 0.18) 0%, rgba(72, 140, 255, 0) 62%),
+    radial-gradient(1000px 520px at 88% 84%, rgba(255, 186, 72, 0.16) 0%, rgba(255, 186, 72, 0) 64%),
+    linear-gradient(180deg, rgba(8, 16, 31, 0.96) 0%, rgba(6, 12, 24, 0.98) 100%);
+}
+
+#about::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 40%, rgba(255, 255, 255, 0.08) 0 2px, transparent 3px) 0 0 / 180px 180px,
+    radial-gradient(circle at 75% 70%, rgba(255, 255, 255, 0.06) 0 2px, transparent 3px) 0 0 / 220px 220px;
+  opacity: 0.5;
+}
+
+#about > .container {
+  position: relative;
+  z-index: 2;
+}
+
+#about h2 {
+  text-align: center;
+  color: #f2f7ff;
+  margin-bottom: clamp(24px, 3vw, 34px);
+}
+
+#about .about-content {
+  display: block;
+}
+
+#about .about-text {
+  display: grid;
+  grid-template-columns: 1.9fr 1fr;
+  gap: 20px;
+}
+
+#about .about-text > br {
+  display: none;
+}
+
+#about #about-intro {
+  grid-column: 1 / 2;
+  margin: 0;
+  color: #e6efff;
+  font-size: clamp(1.08rem, 1.35vw, 1.34rem);
+  line-height: 1.62;
+  text-align: left;
+}
+
+#about .about-text > .card {
+  border-radius: 26px;
+  border: 1px solid rgba(174, 208, 255, 0.24);
+  background: linear-gradient(145deg, rgba(20, 33, 58, 0.74) 0%, rgba(12, 24, 45, 0.62) 100%);
+  box-shadow:
+    0 16px 42px rgba(4, 10, 22, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(14px) saturate(145%);
+  -webkit-backdrop-filter: blur(14px) saturate(145%);
+  margin-bottom: 0;
+  padding: 22px 24px;
+}
+
+#about .about-text > .card h3 {
+  margin: 0 0 16px;
+  color: #f3f8ff;
+  font-size: clamp(1.45rem, 2vw, 1.9rem);
+}
+
+/* Personal info card at top-right */
+#about .about-text > .card:nth-of-type(1) {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+}
+
+#about #personal-info-container p {
+  margin: 12px 0;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(171, 203, 242, 0.2);
+  color: #e6efff;
+  font-size: 1.08rem;
+  line-height: 1.45;
+}
+
+#about #personal-info-container p:last-child {
+  border-bottom: 0;
+}
+
+/* Skill decks full-width */
+#about .about-text > .card:nth-of-type(2),
+#about .about-text > .card:nth-of-type(3) {
+  grid-column: 1 / -1;
+}
+
+#about .skill-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 20px 16px;
+  align-items: start;
+  text-align: center;
+}
+
+#about .skill-item span {
+  display: block;
+  margin-top: 8px;
+  font-size: 1.03rem;
+  color: #ecf3ff;
+  font-weight: 520;
+}
+
+#about .skill-circle {
+  width: 88px;
+  height: 88px;
+  margin: 0 auto;
+  border-radius: 50%;
+  border: 1px solid rgba(185, 214, 255, 0.42);
+  background: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.3), rgba(45, 95, 170, 0.45) 70%);
+  box-shadow:
+    0 10px 26px rgba(5, 11, 25, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.48);
+}
+
+#about .skill-circle img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+}
+
+#about .skill-circle::after {
+  font-size: 13px;
+}
+
+@media (max-width: 1040px) {
+  #about .about-text {
+    grid-template-columns: 1fr;
+  }
+
+  #about #about-intro,
+  #about .about-text > .card:nth-of-type(1),
+  #about .about-text > .card:nth-of-type(2),
+  #about .about-text > .card:nth-of-type(3) {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  #about .about-text > .card {
+    padding: 18px 16px;
+    border-radius: 20px;
+  }
+
+  #about .skill-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+}
+
+/* === About + Resume Reimagination (final) === */
+#about,
+#resume {
+  position: relative;
+  overflow: hidden;
+}
+
+#about::after,
+#resume::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 16% 30%, rgba(255, 255, 255, 0.08) 0 2px, transparent 3px) 0 0 / 200px 200px,
+    radial-gradient(circle at 78% 68%, rgba(255, 195, 88, 0.14) 0 2px, transparent 3px) 0 0 / 260px 260px;
+  opacity: 0.42;
+}
+
+#about > .container,
+#resume > .container {
+  position: relative;
+  z-index: 2;
+}
+
+/* Dark mode base */
+[data-theme='dark'] #about,
+[data-theme='dark'] #resume,
+body:not([data-theme]) #about,
+body:not([data-theme]) #resume {
+  background:
+    radial-gradient(1200px 520px at 14% 18%, rgba(71, 139, 255, 0.18) 0%, rgba(71, 139, 255, 0) 62%),
+    radial-gradient(1100px 580px at 84% 82%, rgba(255, 186, 72, 0.16) 0%, rgba(255, 186, 72, 0) 64%),
+    linear-gradient(180deg, rgba(7, 15, 29, 0.98) 0%, rgba(5, 10, 22, 0.99) 100%);
+}
+
+/* Light mode base */
+body[data-theme='light'] #about,
+body[data-theme='light'] #resume,
+body:not([data-theme='dark']) #about,
+body:not([data-theme='dark']) #resume {
+  background:
+    radial-gradient(1000px 420px at 10% 14%, rgba(103, 165, 255, 0.15) 0%, rgba(103, 165, 255, 0) 62%),
+    radial-gradient(900px 420px at 90% 88%, rgba(255, 201, 112, 0.15) 0%, rgba(255, 201, 112, 0) 60%),
+    linear-gradient(180deg, rgba(237, 244, 255, 0.98) 0%, rgba(232, 240, 252, 0.99) 100%);
+}
+
+#about h2,
+#resume .section-title {
+  letter-spacing: -0.015em;
+}
+
+/* About layout */
+#about .about-content {
+  display: block;
+}
+
+#about .about-text {
+  display: grid;
+  grid-template-columns: 1.85fr 1fr;
+  gap: 22px;
+}
+
+#about #about-intro {
+  margin: 0;
+  font-size: clamp(1.08rem, 1.25vw, 1.34rem);
+  line-height: 1.64;
+}
+
+#about .about-text > .card {
+  border-radius: 24px;
+  margin-bottom: 0;
+  padding: 20px 22px;
+  border: 1px solid rgba(163, 199, 247, 0.28);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+
+#about .about-text > .card:nth-of-type(1) {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+}
+
+#about .about-text > .card:nth-of-type(2),
+#about .about-text > .card:nth-of-type(3) {
+  grid-column: 1 / -1;
+}
+
+#about .skill-grid {
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 18px 14px;
+}
+
+#about .skill-circle {
+  width: 86px;
+  height: 86px;
+}
+
+#about .skill-circle img {
+  width: 62px;
+  height: 62px;
+}
+
+/* About card tones by mode */
+[data-theme='dark'] #about .about-text > .card,
+body:not([data-theme]) #about .about-text > .card {
+  background: linear-gradient(145deg, rgba(20, 33, 58, 0.76) 0%, rgba(12, 24, 45, 0.64) 100%);
+  box-shadow: 0 16px 40px rgba(3, 9, 20, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+[data-theme='dark'] #about #about-intro,
+[data-theme='dark'] #about .about-text > .card h3,
+[data-theme='dark'] #about #personal-info-container p,
+[data-theme='dark'] #about .skill-item span,
+body:not([data-theme]) #about #about-intro,
+body:not([data-theme]) #about .about-text > .card h3,
+body:not([data-theme]) #about #personal-info-container p,
+body:not([data-theme]) #about .skill-item span {
+  color: #eaf2ff;
+}
+
+body:not([data-theme='dark']) #about .about-text > .card {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.62) 0%, rgba(243, 249, 255, 0.54) 100%);
+  box-shadow: 0 14px 34px rgba(74, 98, 132, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.66);
+}
+
+body:not([data-theme='dark']) #about #about-intro,
+body:not([data-theme='dark']) #about .about-text > .card h3,
+body:not([data-theme='dark']) #about #personal-info-container p,
+body:not([data-theme='dark']) #about .skill-item span {
+  color: #253a52;
+}
+
+/* Resume redesign: twin timelines */
+#resume .resume-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+#resume .experience-section,
+#resume .education-section {
+  position: relative;
+  padding-left: 22px;
+}
+
+#resume .experience-section::before,
+#resume .education-section::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 82px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 195, 85, 0.94) 0%, rgba(255, 166, 64, 0.55) 100%);
+  box-shadow: 0 0 14px rgba(255, 187, 78, 0.48);
+}
+
+#resume .resume-widget {
+  margin-bottom: 0;
+}
+
+#resume .resume-item {
+  position: relative;
+  border-radius: 20px;
+  margin-bottom: 18px;
+  padding: 22px 20px 20px;
+  border: 1px solid rgba(162, 198, 245, 0.28);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+#resume .resume-item::after {
+  content: '';
+  position: absolute;
+  left: -30px;
+  top: 32px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #ffd07a;
+  box-shadow: 0 0 12px rgba(255, 190, 78, 0.86);
+}
+
+#resume .resume-item:hover {
+  transform: translateY(-3px);
+}
+
+#resume .resume-item .time {
+  font-size: clamp(1rem, 1.2vw, 1.16rem);
+  font-weight: 700;
+  color: #f7c46f;
+  margin-bottom: 8px;
+}
+
+#resume .resume-item .resume-title {
+  font-size: clamp(1.5rem, 2.1vw, 1.95rem);
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+
+#resume .resume-item .institute {
+  font-size: clamp(1rem, 1.12vw, 1.1rem);
+  margin-bottom: 4px;
+}
+
+#resume .resume-item p {
+  font-size: clamp(0.98rem, 1.08vw, 1.06rem);
+  line-height: 1.55;
+}
+
+/* Resume tones by mode */
+[data-theme='dark'] #resume .resume-item,
+body:not([data-theme]) #resume .resume-item {
+  background: linear-gradient(145deg, rgba(20, 33, 58, 0.78) 0%, rgba(12, 24, 45, 0.66) 100%);
+  box-shadow: 0 16px 38px rgba(3, 9, 20, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+[data-theme='dark'] #resume .resume-item .resume-title,
+[data-theme='dark'] #resume .resume-item .institute,
+[data-theme='dark'] #resume .resume-item p,
+body:not([data-theme]) #resume .resume-item .resume-title,
+body:not([data-theme]) #resume .resume-item .institute,
+body:not([data-theme]) #resume .resume-item p {
+  color: #e8f1ff;
+}
+
+body:not([data-theme='dark']) #resume .resume-item {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.68) 0%, rgba(243, 249, 255, 0.58) 100%);
+  box-shadow: 0 14px 30px rgba(74, 98, 132, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+body:not([data-theme='dark']) #resume .resume-item .resume-title {
+  color: #23374e;
+}
+
+body:not([data-theme='dark']) #resume .resume-item .institute,
+body:not([data-theme='dark']) #resume .resume-item p {
+  color: #3b536b;
+}
+
+/* Responsiveness */
+@media (max-width: 1080px) {
+  #about .about-text {
+    grid-template-columns: 1fr;
+  }
+
+  #about #about-intro,
+  #about .about-text > .card:nth-of-type(1),
+  #about .about-text > .card:nth-of-type(2),
+  #about .about-text > .card:nth-of-type(3) {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+
+  #resume .resume-container {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}
+
+@media (max-width: 768px) {
+  #about .about-text > .card {
+    border-radius: 18px;
+    padding: 16px 14px;
+  }
+
+  #about .skill-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  #resume .experience-section,
+  #resume .education-section {
+    padding-left: 16px;
+  }
+
+  #resume .resume-item {
+    border-radius: 16px;
+    padding: 16px 14px 14px;
+    margin-bottom: 14px;
+  }
+
+  #resume .resume-item::after {
+    left: -22px;
+    top: 24px;
+    width: 10px;
+    height: 10px;
+  }
+
+  #resume .experience-section::before,
+  #resume .education-section::before {
+    left: 0;
+    top: 74px;
+  }
+}
