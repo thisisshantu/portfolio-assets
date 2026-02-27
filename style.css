@@ -105,7 +105,7 @@ nav {
   justify-content: space-between;
   align-items: center;
   padding: 1rem 5%;
-  min-height: var(--nav-height);
+  height: auto;
   position: fixed;
   width: 100%;
   top: 0;
@@ -1437,14 +1437,10 @@ input[type="submit"]:hover {
 }
 
 /* === Responsive Navbar Hardening (mobile + rotation safe) === */
-:root {
-  --nav-height: 72px;
-}
-
 @media (max-width: 1200px) {
   nav {
     padding: 0.85rem 1rem;
-    min-height: var(--nav-height);
+    height: auto;
   }
 
   .hamburger {
@@ -3132,8 +3128,10 @@ body:not([data-theme='dark']) #about h2 {
 #hero.hero {
   position: relative;
   isolation: isolate;
-  min-height: max(92vh, 760px);
-  padding: max(calc(var(--nav-height) + 24px), clamp(108px, 11vh, 138px)) 0 clamp(46px, 6vh, 72px);
+  min-height: max(calc(100svh - var(--nav-height)), 620px);
+  padding: calc(var(--nav-height) + 14px) 0 16px;
+  display: flex;
+  align-items: center;
   background:
     radial-gradient(1100px 620px at 12% 6%, rgba(72, 138, 255, 0.24) 0%, rgba(72, 138, 255, 0) 64%),
     radial-gradient(920px 560px at 88% 84%, rgba(255, 189, 92, 0.2) 0%, rgba(255, 189, 92, 0) 68%),
@@ -3465,8 +3463,9 @@ body:not([data-theme='dark']) #about h2 {
 /* Mobile and tablet */
 @media (max-width: 1080px) {
   #hero.hero {
-    min-height: auto;
-    padding-top: calc(var(--nav-height) + 20px);
+    min-height: calc(100svh - var(--nav-height));
+    padding-top: calc(var(--nav-height) + 12px);
+    padding-bottom: 14px;
   }
 
   #hero .hero-content {
@@ -3527,8 +3526,15 @@ body:not([data-theme='dark']) #about h2 {
   }
 
   #hero.hero {
-    padding-top: calc(var(--nav-height) + 14px);
+    min-height: calc(100svh - var(--nav-height));
+    padding-top: calc(var(--nav-height) + 10px);
+    padding-bottom: 12px;
   }
+}
+
+/* Remove top-right gear cluster from hero */
+.hero-gear-cluster {
+  display: none !important;
 }
 
 @keyframes hero-aurora-shift {
@@ -3681,6 +3687,39 @@ body:not([data-theme='dark']) #hero .stack-icons i {
 #certifications-section,
 #certifications-section .certifications-section {
   background: transparent !important;
+}
+
+/* Final navbar layout guards for resize/rotation stability */
+@media (max-width: 1200px) {
+  .nav-links {
+    left: auto !important;
+    right: 0 !important;
+    bottom: auto !important;
+    width: min(84vw, 360px) !important;
+    height: calc(100dvh - var(--nav-height)) !important;
+    max-height: calc(100dvh - var(--nav-height)) !important;
+    transform: translateX(110%) !important;
+  }
+
+  .nav-links.nav-active {
+    transform: translateX(0) !important;
+  }
+}
+
+@media (min-width: 1201px) {
+  .nav-links {
+    position: static !important;
+    inset: auto !important;
+    width: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    transform: none !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
 }
 
 @keyframes hero-ambient-drift-v2 {
