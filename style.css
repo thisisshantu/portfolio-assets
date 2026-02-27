@@ -3764,23 +3764,18 @@ body:not([data-theme='dark']) #hero .stack-icons i {
   }
 }
 
-/* Disable card hover motion (no lift/scale animation) */
-.card,
-.resume-item,
-.certification-card,
-.project-card,
-.blog-card,
-.recommendation-card {
-  transition-property: border-color, box-shadow, background-color, color !important;
-  transition-duration: 0.2s !important;
-  transform: none !important;
+/* Hero-only: keep main glass card + profile card static on hover */
+#hero .hero-content,
+#hero .main-img-mobile .circular-img-container {
+  transition: none !important;
 }
 
-.card:hover,
-.resume-item:hover,
-.certification-card:hover,
-.project-card:hover,
-.blog-card:hover,
-.recommendation-card:hover {
+#hero .hero-content:hover,
+#hero .hero-content:hover::before,
+#hero .hero-content:hover::after,
+#hero .main-img-mobile .circular-img-container:hover {
   transform: none !important;
+  animation: none !important;
+  box-shadow: inherit !important;
+  filter: none !important;
 }
