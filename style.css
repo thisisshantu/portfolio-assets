@@ -793,6 +793,7 @@ footer {
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
+  background: linear-gradient(135deg, rgba(10, 18, 32, 0.72), rgba(16, 28, 48, 0.54));
 }
 
 .image-strip {
@@ -800,6 +801,7 @@ footer {
   height: 100%;
   animation: scroll-left 60s linear infinite;
   width: max-content;
+  --scroll-shift: 50%;
 }
 
 .image-strip img {
@@ -1388,7 +1390,17 @@ input[type="submit"]:hover {
   }
 
   100% {
-    transform: translateX(-50%);
+    transform: translateX(calc(-1 * var(--scroll-shift, 50%)));
+  }
+}
+
+@media (max-width: 768px) {
+  .image-strip {
+    animation-duration: 75s;
+  }
+
+  .image-strip img {
+    min-width: 220px;
   }
 }
 
