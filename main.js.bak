@@ -28,24 +28,7 @@ function initFadeInObserver() {
 }
 
 function initNavigation() {
-  const hamburger = document.querySelector('.hamburger');
-  const navLinks = document.querySelector('.nav-links');
-  const links = document.querySelectorAll('.nav-links li');
-
-  if (hamburger && navLinks) {
-    hamburger.addEventListener('click', () => {
-      navLinks.classList.toggle('nav-active');
-      hamburger.classList.toggle('toggle');
-    });
-  }
-
-  links.forEach((link) => {
-    link.addEventListener('click', () => {
-      if (navLinks) navLinks.classList.remove('nav-active');
-      if (hamburger) hamburger.classList.remove('toggle');
-    });
-  });
-
+  // Scrollspy-only. Menu open/close lifecycle is handled by initResponsiveNavbar().
   const navLinksEls = document.querySelectorAll('.nav-links a.centered-link');
   const sections = navLinksEls
     ? Array.from(navLinksEls)
@@ -179,6 +162,21 @@ function initThemeToggle() {
   const darkModeToggle = document.getElementById('dark-mode-toggle');
   if (!darkModeToggle) return;
 
+  const THEME_KEY = 'portfolio_theme';
+
+  function applyTheme(theme) {
+    const isDark = theme === 'dark';
+    document.body.classList.toggle('dark-mode', isDark);
+    if (isDark) {
+      document.body.setAttribute('data-theme', 'dark');
+    } else {
+      document.body.removeAttribute('data-theme');
+    }
+  }
+
+  const savedTheme = localStorage.getItem(THEME_KEY);
+  applyTheme(savedTheme === 'light' ? 'light' : 'dark');
+
   function updateThemeToggleIcon() {
     const icon = darkModeToggle.querySelector('i');
     if (!icon) return;
@@ -194,12 +192,12 @@ function initThemeToggle() {
 
   darkModeToggle.addEventListener('click', (e) => {
     e.preventDefault();
-    document.body.classList.toggle('dark-mode');
-    if (document.body.classList.contains('dark-mode')) {
-      document.body.setAttribute('data-theme', 'dark');
-    } else {
-      document.body.removeAttribute('data-theme');
-    }
+    const nextTheme =
+      document.body.classList.contains('dark-mode') || document.body.getAttribute('data-theme') === 'dark'
+        ? 'light'
+        : 'dark';
+    applyTheme(nextTheme);
+    localStorage.setItem(THEME_KEY, nextTheme);
     updateThemeToggleIcon();
   });
 }
@@ -442,10 +440,11 @@ function clearStaleSectionLoaders() {
 function runSectionLoad(target, label, loaderMessage, taskFn) {
   const host = resolveSectionTarget(target);
   const cacheKey = label ? String(label).toLowerCase().replace(/\s+/g, '_') : '';
-  const cachedHtml = host ? readSectionCache(cacheKey) : null;
+  const disableCache = cacheKey === 'experience' || cacheKey === 'education';
+  const cachedHtml = host && !disableCache ? readSectionCache(cacheKey) : null;
   const hasCache = !!(cachedHtml && cachedHtml.trim());
 
-  if (host && hasCache) {
+  if (host && hasCache && !disableCache) {
     host.innerHTML = cachedHtml;
     clearSectionLoadingState(host);
   }
@@ -478,7 +477,7 @@ function runSectionLoad(target, label, loaderMessage, taskFn) {
     .then(() => taskFn())
     .then(() => {
       const finalHost = resolveSectionTarget(target);
-      if (!finalHost || !cacheKey) return;
+      if (!finalHost || !cacheKey || disableCache) return;
 
       const snapshot = finalHost.cloneNode(true);
       snapshot.querySelectorAll('.section-loader').forEach((el) => el.remove());
@@ -529,6 +528,7 @@ async function loadTimelineSection(config) {
   });
 
   container.insertAdjacentHTML('beforeend', cards.join(''));
+  container.scrollTop = 0;
 }
 
 async function loadExperience() {
@@ -1287,17 +1287,26 @@ async function loadFooterImages() {
 
     container.innerHTML = '';
     const imageUrls = rows.slice(1).map((row) => row.c[0]?.v).filter(Boolean);
+    if (!imageUrls.length) return;
+
+    const copies = imageUrls.length < 4 ? 3 : 2;
+    container.style.setProperty('--scroll-shift', copies === 3 ? '33.333%' : '50%');
+
     const appendImages = () => {
       imageUrls.forEach((imgUrl) => {
         const img = document.createElement('img');
         img.src = imgUrl;
-        img.loading = 'lazy';
+        img.loading = 'eager';
+        img.decoding = 'async';
+        img.referrerPolicy = 'no-referrer';
+        img.onerror = () => {
+          img.style.display = 'none';
+        };
         container.appendChild(img);
       });
     };
 
-    appendImages();
-    appendImages(); // duplicate for seamless infinite scrolling animation
+    for (let i = 0; i < copies; i += 1) appendImages();
 
   } catch (err) {
     console.error('Footer image load failed:', err);
@@ -1543,46 +1552,36 @@ function initFloatingDocsBackground() {
   document.body.prepend(layer);
 
   const symbols = [
-    { type: 'emoji', value: '📈' },
-    { type: 'emoji', value: '📄' },
-    { type: 'emoji', value: '📜' },
-    { type: 'emoji', value: '📊' },
-    { type: 'emoji', value: '📝' },
-    { type: 'emoji', value: '📑' },
-    { type: 'emoji', value: '📃' },
-    { type: 'emoji', value: '🗂️' },
-    { type: 'emoji', value: '🗃️' },
-    { type: 'emoji', value: '📋' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoftexcel/217346', alt: 'Excel' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoftpowerpoint/B7472A', alt: 'PowerPoint' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoftaccess/A4373A', alt: 'Access' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoftteams/6264A7', alt: 'Teams' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoftoutlook/0078D4', alt: 'Outlook' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/powerautomate/0066FF', alt: 'Power Automate' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/notion/000000', alt: 'Notion' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/google/4285F4', alt: 'Google' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/googleslides/FBBC04', alt: 'Google Slides' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/googlesheets/34A853', alt: 'Google Sheets' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/applenotes/FFCC00', alt: 'Apple Notes' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/apple/000000', alt: 'Apple' },
-    { type: 'icon', value: 'https://cdn.simpleicons.org/microsoft365/D83B01', alt: 'Microsoft 365' }
+    { type: 'fa', value: 'fa-solid fa-briefcase', color: '#3b82f6' },
+    { type: 'fa', value: 'fa-solid fa-chart-line', color: '#22c55e' },
+    { type: 'fa', value: 'fa-solid fa-chart-pie', color: '#f59e0b' },
+    { type: 'fa', value: 'fa-solid fa-building', color: '#64748b' },
+    { type: 'fa', value: 'fa-solid fa-building-columns', color: '#6366f1' },
+    { type: 'fa', value: 'fa-solid fa-file-invoice-dollar', color: '#14b8a6' },
+    { type: 'fa', value: 'fa-solid fa-money-bill-trend-up', color: '#10b981' },
+    { type: 'fa', value: 'fa-solid fa-sack-dollar', color: '#84cc16' },
+    { type: 'fa', value: 'fa-solid fa-coins', color: '#eab308' },
+    { type: 'fa', value: 'fa-solid fa-money-check-dollar', color: '#0ea5e9' },
+    { type: 'fa', value: 'fa-solid fa-handshake', color: '#f97316' },
+    { type: 'fa', value: 'fa-solid fa-user-tie', color: '#a855f7' },
+    { type: 'fa', value: 'fa-solid fa-lightbulb', color: '#facc15' },
+    { type: 'fa', value: 'fa-solid fa-clipboard-list', color: '#38bdf8' },
+    { type: 'fa', value: 'fa-solid fa-calendar-check', color: '#4ade80' },
+    { type: 'fa', value: 'fa-solid fa-network-wired', color: '#60a5fa' },
+    { type: 'fa', value: 'fa-solid fa-bullhorn', color: '#fb7185' },
+    { type: 'fa', value: 'fa-solid fa-scale-balanced', color: '#94a3b8' }
   ];
   const count = window.matchMedia('(max-width: 768px)').matches ? 22 : 44;
 
   for (let i = 0; i < count; i += 1) {
     const item = document.createElement('span');
     item.className = 'doc-float-item';
-    const token = symbols[i % symbols.length];
-    if (token.type === 'icon') {
-      const img = document.createElement('img');
-      img.className = 'doc-float-icon';
-      img.src = token.value;
-      img.alt = token.alt;
-      img.loading = 'lazy';
-      item.appendChild(img);
-    } else {
-      item.textContent = token.value;
-    }
+    const token = symbols[Math.floor(Math.random() * symbols.length)];
+    const icon = document.createElement('i');
+    icon.className = token.value + ' doc-float-fa';
+    icon.style.color = token.color;
+    icon.setAttribute('aria-hidden', 'true');
+    item.appendChild(icon);
 
     const left = Math.random() * 100;
     const size = 14 + Math.random() * 42;
@@ -1632,7 +1631,6 @@ function initHeroGearCluster() {
 document.addEventListener('DOMContentLoaded', () => {
   clearStaleSectionLoaders();
   initFloatingDocsBackground();
-  initHeroGearCluster();
   initResponsiveNavbar();
   initFadeInObserver();
   initNavigation();
@@ -1644,16 +1642,21 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error('SEO metadata load failed:', err);
   });
 
-  runSectionLoad('hero', 'hero', 'Loading hero...', loadHeroSection);
-  runSectionLoad('experience-container', 'experience', 'Loading experience...', loadExperience);
-  runSectionLoad('education-container', 'education', 'Loading education...', loadEducation);
-  runSectionLoad('certifications-container', 'certifications', 'Loading certifications...', loadCertifications);
-  runSectionLoad('#about .about-content', 'about', 'Loading about...', loadAboutSection);
-  runSectionLoad('testimonial-container', 'testimonial', 'Loading testimonials...', loadTestimonials);
-  runSectionLoad('video-container', 'videos', 'Loading videos...', loadVideoSection);
-  runSectionLoad('projects-container', 'projects', 'Loading projects...', loadProjects);
-  runSectionLoad('design-container', 'design', 'Loading designs...', loadDesignProjects);
-  runSectionLoad('footer-image-strip', 'footer images', 'Loading footer visuals...', loadFooterImages);
+  const sectionLoads = [
+    ['hero', 'hero', 'Loading hero...', loadHeroSection],
+    ['experience-container', 'experience', 'Loading experience...', loadExperience],
+    ['education-container', 'education', 'Loading education...', loadEducation],
+    ['certifications-container', 'certifications', 'Loading certifications...', loadCertifications],
+    ['#about .about-content', 'about', 'Loading about...', loadAboutSection],
+    ['testimonial-container', 'testimonial', 'Loading testimonials...', loadTestimonials],
+    ['video-container', 'videos', 'Loading videos...', loadVideoSection],
+    ['projects-container', 'projects', 'Loading projects...', loadProjects],
+    ['design-container', 'design', 'Loading designs...', loadDesignProjects],
+    ['footer-image-strip', 'footer images', 'Loading footer visuals...', loadFooterImages],
+  ];
+  sectionLoads.forEach(([target, cacheKey, label, loader]) => {
+    runSectionLoad(target, cacheKey, label, loader);
+  });
   initBlogsSection();
 
   initScrollTextOverflow();
@@ -1664,6 +1667,7 @@ function initResponsiveNavbar() {
   const hamburger = document.querySelector(".hamburger");
   const navLinks = document.querySelector(".nav-links");
   if (!nav || !hamburger || !navLinks) return;
+  let wasMobile = window.matchMedia("(max-width: 1200px)").matches;
 
   function closeMenu() {
     navLinks.classList.remove("nav-active");
@@ -1671,18 +1675,31 @@ function initResponsiveNavbar() {
     hamburger.setAttribute("aria-expanded", "false");
   }
 
+  function openMenu() {
+    navLinks.classList.add("nav-active");
+    hamburger.classList.add("toggle");
+    hamburger.setAttribute("aria-expanded", "true");
+  }
+
   function syncNavPanelSize() {
-    const navHeight = Math.ceil(nav.getBoundingClientRect().height);
+    const measured = Math.ceil(nav.getBoundingClientRect().height);
+    const navHeight = Math.max(56, Math.min(120, measured));
     document.documentElement.style.setProperty("--nav-height", navHeight + "px");
 
-    if (window.matchMedia("(max-width: 1200px)").matches) {
+    const isMobile = window.matchMedia("(max-width: 1200px)").matches;
+
+    if (isMobile) {
       navLinks.style.top = navHeight + "px";
       navLinks.style.height = "calc(100dvh - " + navHeight + "px)";
     } else {
       navLinks.style.top = "";
       navLinks.style.height = "";
+    }
+
+    if (wasMobile !== isMobile) {
       closeMenu();
     }
+    wasMobile = isMobile;
   }
 
   if (!hamburger.hasAttribute("aria-expanded")) {
@@ -1691,7 +1708,17 @@ function initResponsiveNavbar() {
 
   hamburger.addEventListener("click", () => {
     const isOpen = navLinks.classList.contains("nav-active");
-    hamburger.setAttribute("aria-expanded", isOpen ? "false" : "true");
+    if (isOpen) {
+      closeMenu();
+    } else {
+      openMenu();
+    }
+  });
+
+  navLinks.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      if (window.matchMedia("(max-width: 1200px)").matches) closeMenu();
+    });
   });
 
   document.addEventListener("keydown", (e) => {
@@ -1706,7 +1733,10 @@ function initResponsiveNavbar() {
     if (!clickedInsideNav) closeMenu();
   });
 
-  const relayout = () => syncNavPanelSize();
+  const relayout = () => {
+    closeMenu();
+    syncNavPanelSize();
+  };
   window.addEventListener("resize", relayout);
   window.addEventListener("orientationchange", relayout);
 
