@@ -509,7 +509,7 @@ async function loadTimelineSection(config) {
   if (!container) return;
   container.innerHTML = '';
 
-  const cards = rows.slice(1).map((row, index) => {
+  const cards = rows.slice(1).map((row) => {
     const start = row.c[0]?.v;
     const end = row.c[1]?.v;
     const title = row.c[titleColumn]?.v;
@@ -517,15 +517,17 @@ async function loadTimelineSection(config) {
     const location = row.c[4]?.v;
     const description = row.c[5]?.v;
 
+    if (!title || !institute) return '';
+
     return `
-      <div class="resume-item wow ${animationClass}" data-wow-delay="0.${index + 3}s">
+      <div class="resume-item">
         <div class="time">${start} - ${end}</div>
         <h3 class="resume-title">${title}</h3>
         <div class="institute">${institute}, ${location}</div>
         <p>${description}</p>
       </div>
     `;
-  });
+  }).filter(Boolean);
 
   container.insertAdjacentHTML('beforeend', cards.join(''));
   container.scrollTop = 0;
