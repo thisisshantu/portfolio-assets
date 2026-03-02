@@ -440,10 +440,11 @@ function clearStaleSectionLoaders() {
 function runSectionLoad(target, label, loaderMessage, taskFn) {
   const host = resolveSectionTarget(target);
   const cacheKey = label ? String(label).toLowerCase().replace(/\s+/g, '_') : '';
-  const cachedHtml = host ? readSectionCache(cacheKey) : null;
+  const disableCache = cacheKey === 'experience' || cacheKey === 'education';
+  const cachedHtml = host && !disableCache ? readSectionCache(cacheKey) : null;
   const hasCache = !!(cachedHtml && cachedHtml.trim());
 
-  if (host && hasCache) {
+  if (host && hasCache && !disableCache) {
     host.innerHTML = cachedHtml;
     clearSectionLoadingState(host);
   }
@@ -476,7 +477,7 @@ function runSectionLoad(target, label, loaderMessage, taskFn) {
     .then(() => taskFn())
     .then(() => {
       const finalHost = resolveSectionTarget(target);
-      if (!finalHost || !cacheKey) return;
+      if (!finalHost || !cacheKey || disableCache) return;
 
       const snapshot = finalHost.cloneNode(true);
       snapshot.querySelectorAll('.section-loader').forEach((el) => el.remove());
@@ -527,6 +528,7 @@ async function loadTimelineSection(config) {
   });
 
   container.insertAdjacentHTML('beforeend', cards.join(''));
+  container.scrollTop = 0;
 }
 
 async function loadExperience() {
@@ -1285,17 +1287,26 @@ async function loadFooterImages() {
 
     container.innerHTML = '';
     const imageUrls = rows.slice(1).map((row) => row.c[0]?.v).filter(Boolean);
+    if (!imageUrls.length) return;
+
+    const copies = imageUrls.length < 4 ? 3 : 2;
+    container.style.setProperty('--scroll-shift', copies === 3 ? '33.333%' : '50%');
+
     const appendImages = () => {
       imageUrls.forEach((imgUrl) => {
         const img = document.createElement('img');
         img.src = imgUrl;
-        img.loading = 'lazy';
+        img.loading = 'eager';
+        img.decoding = 'async';
+        img.referrerPolicy = 'no-referrer';
+        img.onerror = () => {
+          img.style.display = 'none';
+        };
         container.appendChild(img);
       });
     };
 
-    appendImages();
-    appendImages(); // duplicate for seamless infinite scrolling animation
+    for (let i = 0; i < copies; i += 1) appendImages();
 
   } catch (err) {
     console.error('Footer image load failed:', err);
