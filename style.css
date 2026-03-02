@@ -3090,6 +3090,22 @@ body:not([data-theme]) #about h2 {
   text-shadow: none;
 }
 
+/* === Image visibility fix: white backplate for key card sections === */
+#certifications-container .cert-image {
+  background: #ffffff;
+}
+
+#certifications-container .cert-image img {
+  background: #ffffff;
+  object-fit: contain;
+  padding: 4px;
+}
+
+#projects-container .project-card img,
+#design-container .project-card img {
+  background: #ffffff;
+}
+
 #about .about-text {
   align-items: start;
 }
