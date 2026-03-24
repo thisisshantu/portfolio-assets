@@ -1107,6 +1107,7 @@ document.addEventListener('click', function (e) {
   const project = PROJECTS_DATA[id];
   if (!project) return;
 
+  triggerCardOpenAnimation(card);
   openProjectPopup(project);
 });
 
@@ -1133,6 +1134,17 @@ function openProjectPopup(project) {
 
   const popup = document.getElementById('project-popup');
   if (popup) popup.classList.add('active');
+}
+
+function triggerCardOpenAnimation(card) {
+  if (!card) return;
+  card.classList.remove('card-opening');
+  void card.offsetWidth;
+  card.classList.add('card-opening');
+
+  window.setTimeout(() => {
+    card.classList.remove('card-opening');
+  }, 420);
 }
 
 /* ================================
@@ -1218,6 +1230,8 @@ document.addEventListener('click', e => {
 
   const project = DESIGN_PROJECTS[card.dataset.designId];
   if (!project) return;
+
+  triggerCardOpenAnimation(card);
 
   const designTitle = document.getElementById('design-popup-title');
   const designDesc = document.getElementById('design-popup-description');
