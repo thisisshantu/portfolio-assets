@@ -295,12 +295,49 @@ const API_PROXY_ENDPOINTS = new Set([
   'seo'
 ]);
 
+function getDirectSheetUrl(sheetName) {
+  return `https://docs.google.com/spreadsheets/d/${PORTFOLIO_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+}
+
 function getSheetUrl(sheetName) {
   const key = String(sheetName || '').trim().toLowerCase();
   if (API_PROXY_ENDPOINTS.has(key)) {
     return `${API_BASE}?endpoint=${encodeURIComponent(key)}`;
   }
-  return `https://docs.google.com/spreadsheets/d/${PORTFOLIO_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+  return getDirectSheetUrl(sheetName);
+}
+
+async function fetchSheetRows(sheetName) {
+  const proxyUrl = getSheetUrl(sheetName);
+  const directUrl = getDirectSheetUrl(sheetName);
+  const errors = [];
+
+  async function requestRows(url, source) {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`${source}_http_${response.status}`);
+    }
+
+    const text = await response.text();
+    return parseGoogleResponse(text);
+  }
+
+  if (proxyUrl !== directUrl) {
+    try {
+      return await requestRows(proxyUrl, 'proxy');
+    } catch (error) {
+      errors.push(error);
+      console.warn(`Proxy fetch failed for "${sheetName}". Falling back to direct sheet access.`, error);
+    }
+  }
+
+  try {
+    return await requestRows(directUrl, 'direct');
+  } catch (error) {
+    errors.push(error);
+  }
+
+  throw errors[errors.length - 1] || new Error(`Failed to load sheet: ${sheetName}`);
 }
 
 function parseGoogleResponse(text) {
@@ -501,9 +538,7 @@ async function loadTimelineSection(config) {
     animationClass
   } = config;
 
-  const response = await fetch(getSheetUrl(sheet));
-  const text = await response.text();
-  const rows = parseGoogleResponse(text);
+  const rows = await fetchSheetRows(sheet);
 
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -554,11 +589,7 @@ async function loadEducation() {
 }
 
 async function loadHeroSection() {
-  const url = getSheetUrl('hero');
-
-  const response = await fetch(url);
-  const text = await response.text();
-  const rows = parseGoogleResponse(text);
+  const rows = await fetchSheetRows('hero');
 
   const heroData = {};
   rows.forEach(row => {
@@ -622,10 +653,7 @@ function upsertCanonical(url) {
 }
 
 async function loadSeoMetadata() {
-  const url = getSheetUrl('seo');
-  const response = await fetch(url);
-  const text = await response.text();
-  const rows = parseGoogleResponse(text);
+  const rows = await fetchSheetRows('seo');
   if (!rows || rows.length === 0) return;
 
   const getVal = (cell) => {
@@ -846,11 +874,7 @@ function applySectionPagination(container, paginationId, cards) {
 
 /* ===== Certifications Loader ===== */
 async function loadCertifications() {
-  const url = getSheetUrl('certifications');
-
-  const response = await fetch(url);
-  const text = await response.text();
-  const rows = parseGoogleResponse(text);
+  const rows = await fetchSheetRows('certifications');
 
   const container = document.getElementById('certifications-container');
   if (!container) return;
@@ -894,10 +918,7 @@ async function loadCertifications() {
 
 async function loadAboutSection() {
   async function fetchSheet(sheet) {
-    const url = getSheetUrl(sheet);
-    const res = await fetch(url);
-    const text = await res.text();
-    return parseGoogleResponse(text);
+    return fetchSheetRows(sheet);
   }
 
   function renderSkills(container, rows) {
@@ -965,12 +986,8 @@ async function loadAboutSection() {
 async function loadTestimonials() {
   const SHEET_NAME = 'testimonial'; // 👈 change ONLY if your tab name differs
 
-  const url = getSheetUrl(SHEET_NAME);
-
   try {
-    const response = await fetch(url);
-    const text = await response.text();
-    const rows = parseGoogleResponse(text);
+    const rows = await fetchSheetRows(SHEET_NAME);
 
     const container = document.getElementById('testimonial-container');
     if (!container) return;
@@ -1017,12 +1034,8 @@ async function loadTestimonials() {
 async function loadVideoSection() {
   const SHEET_NAME = 'videos';
 
-  const url = getSheetUrl(SHEET_NAME);
-
   try {
-    const response = await fetch(url);
-    const text = await response.text();
-    const rows = parseGoogleResponse(text);
+    const rows = await fetchSheetRows(SHEET_NAME);
 
     // Skip header row, get iframe HTML
     const iframeHTML = rows[1]?.c[0]?.v;
@@ -1046,11 +1059,7 @@ const PROJECTS_DATA = {};
 async function loadProjects() {
   const SHEET_NAME = 'projects';
 
-  const url = getSheetUrl(SHEET_NAME);
-
-  const response = await fetch(url);
-  const text = await response.text();
-  const rows = parseGoogleResponse(text);
+  const rows = await fetchSheetRows(SHEET_NAME);
 
   const container = document.getElementById('projects-container');
   if (!container) return;
@@ -1156,16 +1165,13 @@ const DESIGN_PROJECTS = {};
    LOAD DESIGN PROJECTS
 ================================ */
 async function loadDesignProjects() {
-  const projectURL = getSheetUrl('design_projects');
-  const assetURL = getSheetUrl('design_assets');
-
-  const [projectRes, assetRes] = await Promise.all([
-    fetch(projectURL).then(r => r.text()),
-    fetch(assetURL).then(r => r.text())
+  const [projectRowsRaw, assetRowsRaw] = await Promise.all([
+    fetchSheetRows('design_projects'),
+    fetchSheetRows('design_assets')
   ]);
 
-  const projectRows = parseGoogleResponse(projectRes).slice(1);
-  const assetRows   = parseGoogleResponse(assetRes).slice(1);
+  const projectRows = projectRowsRaw.slice(1);
+  const assetRows = assetRowsRaw.slice(1);
   Object.keys(DESIGN_PROJECTS).forEach((key) => delete DESIGN_PROJECTS[key]);
 
   // Store projects
@@ -1291,12 +1297,8 @@ document.addEventListener('click', (e) => {
    Footer Scrolling Images Loader
 ================================ */
 async function loadFooterImages() {
-  const url = getSheetUrl('footer_images');
-
   try {
-    const response = await fetch(url);
-    const text = await response.text();
-    const rows = parseGoogleResponse(text);
+    const rows = await fetchSheetRows(SHEET_NAME);
 
     const container = document.getElementById('footer-image-strip');
     if (!container) return;
@@ -1420,12 +1422,8 @@ async function loadBlogs() {
   let loadedAny = false;
 
   try {
-    const url = getSheetUrl(sheetName);
-
     try {
-      const response = await fetch(url);
-      const text = await response.text();
-      const rows = parseGoogleResponse(text);
+      const rows = await fetchSheetRows(sheetName);
       if (requestId !== blogsLoadRequestId) return false;
 
       if (!rows || rows.length === 0) {
