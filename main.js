@@ -1297,6 +1297,8 @@ document.addEventListener('click', (e) => {
    Footer Scrolling Images Loader
 ================================ */
 async function loadFooterImages() {
+  const SHEET_NAME = 'footer_images';
+
   try {
     const rows = await fetchSheetRows(SHEET_NAME);
 
