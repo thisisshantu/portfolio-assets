@@ -273,7 +273,7 @@ if (exploreBtn) {
 // You can add more JS for interactivity as needed
 
 const PORTFOLIO_SHEET_ID = '1VYbIKHEgmpHljYLTTHoonE_IlARRpxudiQ_0QFKDRkU';
-const API_BASE = 'https://script.google.com/macros/s/AKfycbzQxsOgxS6Nqof7v9azreuRbq9npoI3zO99F8Npt5XsQBaTyAna8eTmzWi0Jeg0ImcAAQ/exec';
+const API_BASE = 'https://script.google.com/macros/s/AKfycbzmzOixIQnZV-k4xMIKX8-v0spKqb3G_n_uPZ_6t32AdLuE8IYtNxERDAoe9R_rC3scBQ/exec';
 
 // Endpoints exposed via Apps Script proxy.
 const API_PROXY_ENDPOINTS = new Set([
